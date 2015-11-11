@@ -20,6 +20,7 @@
  */
 package de.maci.photography.eyebeam.library;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner.Options;
@@ -47,7 +48,7 @@ import static java.util.Objects.requireNonNull;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 30.09.15
  */
-public final class Library {
+public class Library {
 
     private static final Logger logger = LoggerFactory.getLogger(Library.class);
 
@@ -59,8 +60,9 @@ public final class Library {
 
     private final AtomicBoolean refreshing = new AtomicBoolean(false);
 
-    private Library(@Nonnull LibraryConfiguration configuration,
-                    @Nonnull Supplier<LibraryDataStore> newDataStoreInstanceSupplier) {
+    @VisibleForTesting
+    Library(@Nonnull LibraryConfiguration configuration,
+            @Nonnull Supplier<LibraryDataStore> newDataStoreInstanceSupplier) {
         requireNonNull(configuration, "Configuration must not be null.");
         requireNonNull(newDataStoreInstanceSupplier, "New data store instance supplier must not be null.");
 
@@ -113,7 +115,8 @@ public final class Library {
         return photos().stream().filter(photo -> !dataStore.metadataOf(photo).isPresent());
     }
 
-    private FilesystemScanner createScanner(Predicate<Path> fileFilter) {
+    @VisibleForTesting
+    protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
         return FilesystemScanner.newInstance(fileFilter, Options.newInstance().followSymlinks(true));
     }
 

@@ -43,7 +43,7 @@ import javax.annotation.Nonnull;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 02.10.15
  */
-public final class FilesystemScanner {
+public class FilesystemScanner {
 
     public static final class Options {
 

@@ -1,25 +1,33 @@
 package de.maci.photography.eyebeam.library;
 
-import de.maci.photography.eyebeam.library.metadata.ExifData;
+import com.google.common.util.concurrent.Uninterruptibles;
+import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.jayway.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
 import static org.junit.Assert.*;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -107,6 +115,44 @@ public class LibraryTest {
         Library sut = Library.newInstance(anyConfig(), () -> dataStore);
 
         assertThat(sut.metadataOf(photo).get(), is(metadata));
+    }
+
+    @Test
+    public void refreshingFlagIsSet_IfLibraryIsRefreshing() throws Exception {
+        Library sut = new Library(anyConfig(), () -> new InMemoryDataStore()) {
+
+            @Override
+            @SuppressWarnings("unchecked")
+            protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
+                int sleepFor = 500;
+                return sleepingFilesystemScanner(sleepFor);
+            }
+        };
+
+        new Thread(() -> sut.refresh()).start();
+
+        await().atMost(250, MILLISECONDS).until(() -> sut.isRefreshing());
+        await().atMost(1, SECONDS).until(() -> !sut.isRefreshing());
+    }
+
+    @Test
+    public void refreshingFlagIsNotSet_IfLibraryInstanceJustHasBeenCreated() throws Exception {
+        Library sut = Library.newInstance(anyConfig(), () -> new InMemoryDataStore());
+
+        assertFalse(sut.isRefreshing());
+    }
+
+    private static FilesystemScanner sleepingFilesystemScanner(int sleepFor) {
+        FilesystemScanner sleepingScanner = mock(FilesystemScanner.class);
+        try {
+            Mockito.doAnswer(invocation -> {
+                Uninterruptibles.sleepUninterruptibly(sleepFor, MILLISECONDS);
+                return null;
+            }).when(sleepingScanner).scan(any(Path.class), any(Consumer.class));
+        } catch (IOException e) {
+            fail();
+        }
+        return sleepingScanner;
     }
 
     private static LibraryDataStore dataStoreContainingThreePhotos() {
