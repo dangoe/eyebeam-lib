@@ -7,7 +7,7 @@
 
     <groupId>de.maci.photography</groupId>
     <artifactId>eyebeam-lib</artifactId>
-    <version>1.0.0-alpha</version>
+    <version>1.0.0-beta-SNAPSHOT</version>
 
     <build>
         <plugins>
