@@ -122,7 +122,6 @@ public class LibraryTest {
         Library sut = new Library(anyConfig(), () -> new InMemoryDataStore()) {
 
             @Override
-            @SuppressWarnings("unchecked")
             protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
                 int sleepFor = 500;
                 return sleepingFilesystemScanner(sleepFor);
@@ -142,6 +141,7 @@ public class LibraryTest {
         assertFalse(sut.isRefreshing());
     }
 
+    @SuppressWarnings("unchecked")
     private static FilesystemScanner sleepingFilesystemScanner(int sleepFor) {
         FilesystemScanner sleepingScanner = mock(FilesystemScanner.class);
         try {
