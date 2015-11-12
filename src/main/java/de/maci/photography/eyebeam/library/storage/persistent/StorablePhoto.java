@@ -25,11 +25,11 @@ import java.util.Objects;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 06.11.15
  */
-@SuppressWarnings("unused")
 public class StorablePhoto implements Storable<Photo>, Comparable<StorablePhoto> {
 
     private String path;
 
+    @SuppressWarnings("unused")
     public StorablePhoto() {
         super();
     }

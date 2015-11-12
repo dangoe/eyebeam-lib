@@ -26,7 +26,6 @@ import java.util.Optional;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 06.11.15
  */
-@SuppressWarnings("unused")
 public class StorableMetadata implements Storable<Metadata> {
 
     private Long fileSize;
@@ -37,6 +36,7 @@ public class StorableMetadata implements Storable<Metadata> {
     private Integer iso;
     private Instant takenAt;
 
+    @SuppressWarnings("unused")
     public StorableMetadata() {
         super();
     }
