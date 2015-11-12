@@ -18,6 +18,7 @@ package de.maci.photography.eyebeam.library.testhelper;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import org.mockito.invocation.InvocationOnMock;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
@@ -37,12 +38,16 @@ public class MockingHelper {
     }
 
     @SuppressWarnings("unchecked")
-    public static FilesystemScanner mockFileScanner(Consumer<InvocationOnMock> operation) throws IOException {
+    public static FilesystemScanner mockFileScanner(@Nonnull Consumer<InvocationOnMock> operation) {
         FilesystemScanner scanner = mock(FilesystemScanner.class);
-        doAnswer(invocation -> {
-            operation.accept(invocation);
-            return null;
-        }).when(scanner).scan(any(Path.class), any(Consumer.class));
+        try {
+            doAnswer(invocation -> {
+                operation.accept(invocation);
+                return null;
+            }).when(scanner).scan(any(Path.class), any(Consumer.class));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return scanner;
     }
 }

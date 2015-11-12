@@ -10,7 +10,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -226,21 +225,13 @@ public class LibraryTest {
 
     @SuppressWarnings("unchecked")
     private static FilesystemScanner scannerOnPaths(Collection<Path> paths) {
-        try {
-            return mockFileScanner(invocation -> paths
-                    .forEach(path -> ((Consumer<Path>) invocation.getArguments()[1]).accept(path)));
-        } catch (IOException e) {
-            return null;
-        }
+        return mockFileScanner(invocation -> paths
+                .forEach(path -> ((Consumer<Path>) invocation.getArguments()[1]).accept(path)));
     }
 
     @SuppressWarnings("unchecked")
     private static FilesystemScanner sleepingFilesystemScanner(int sleepFor) {
-        try {
-            return mockFileScanner(invocation -> Uninterruptibles.sleepUninterruptibly(sleepFor, MILLISECONDS));
-        } catch (IOException e) {
-            return null;
-        }
+        return mockFileScanner(invocation -> Uninterruptibles.sleepUninterruptibly(sleepFor, MILLISECONDS));
     }
 
     private static LibraryDataStore dataStoreContainingThreePhotos() {
