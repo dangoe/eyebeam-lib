@@ -43,6 +43,7 @@ import static java.util.Objects.requireNonNull;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 30.09.15
  */
+// TODO Thread safety
 public class Library {
 
     private static final Logger logger = LoggerFactory.getLogger(Library.class);
