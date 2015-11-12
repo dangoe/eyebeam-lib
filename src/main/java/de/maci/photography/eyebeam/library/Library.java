@@ -67,7 +67,17 @@ public class Library {
         this.rootFolder = configuration.rootFolder();
 
         this.scanner = createScanner(configuration.fileFilter().orElse(path -> true));
-        this.metadataReader = new DefaultMetadataReader();
+        this.metadataReader = createMetadataReader();
+    }
+
+    @VisibleForTesting
+    protected MetadataReader createMetadataReader() {
+        return new DefaultMetadataReader();
+    }
+
+    @VisibleForTesting
+    protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
+        return FilesystemScanner.newInstance(fileFilter, Options.newInstance().followSymlinks(true));
     }
 
     public Set<Photo> photos() {
@@ -108,11 +118,6 @@ public class Library {
 
     private Stream<Photo> photosWithoutExifData() {
         return photos().stream().filter(photo -> !dataStore.metadataOf(photo).isPresent());
-    }
-
-    @VisibleForTesting
-    protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
-        return FilesystemScanner.newInstance(fileFilter, Options.newInstance().followSymlinks(true));
     }
 
     public void clear() {

@@ -10,9 +10,11 @@ import java.io.File;
 import java.util.NoSuchElementException;
 
 import static java.util.Collections.singleton;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsEmptyIterable.emptyIterable;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>

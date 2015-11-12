@@ -3,17 +3,18 @@ package de.maci.photography.eyebeam.library;
 import com.google.common.util.concurrent.Uninterruptibles;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
+import de.maci.photography.eyebeam.library.metadata.MetadataReader;
 import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -21,14 +22,20 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static de.maci.photography.eyebeam.library.testhelper.MockingHelper.mockFileScanner;
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInAnyOrder;
-import static org.junit.Assert.*;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -141,18 +148,99 @@ public class LibraryTest {
         assertFalse(sut.isRefreshing());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    public void photosAreAddedWithRelativizedPathToTheDataStore_WhileRefresing() throws Exception {
+        Path rootFolder = Paths.get("/some/folder");
+        Path somePhotoPath = rootFolder.resolve("somePhoto.jpg");
+        Path aSecondPhotoPath = rootFolder.resolve("aSecondPhoto.jpg");
+        Path aThirdPhotoPath = rootFolder.resolve("aThirdPhoto.jpg");
+
+        LibraryDataStore dataStore = mock(LibraryDataStore.class);
+
+        Library sut = new Library(new LibraryConfiguration() {
+            @Override
+            public Path rootFolder() {
+                return rootFolder;
+            }
+
+            @Override
+            public Optional<Predicate<Path>> fileFilter() {
+                return Optional.empty();
+            }
+        }, () -> dataStore) {
+            @Override
+            protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
+                return scannerOnPaths(asList(somePhotoPath, aSecondPhotoPath, aThirdPhotoPath));
+            }
+        };
+
+        sut.refresh();
+
+        verify(dataStore).store(new Photo(rootFolder.relativize(somePhotoPath)));
+        verify(dataStore).store(new Photo(rootFolder.relativize(aSecondPhotoPath)));
+        verify(dataStore).store(new Photo(rootFolder.relativize(aThirdPhotoPath)));
+    }
+
+    @Test
+    public void metadataIsResolved_WhileRefreshing() throws Exception {
+        Path rootFolder = Paths.get("/some/folder");
+        Path somePhotoPath = rootFolder.resolve("somePhoto.jpg");
+        Path aSecondPhotoPath = rootFolder.resolve("aSecondPhoto.jpg");
+        Path aThirdPhotoPath = rootFolder.resolve("aThirdPhoto.jpg");
+
+        LibraryDataStore dataStore = new InMemoryDataStore();
+        MetadataReader metadataReader = mock(MetadataReader.class);
+        when(metadataReader.readFrom(any(Path.class))).thenReturn(Optional.of(Metadata.empty()));
+
+        Library sut = new Library(new LibraryConfiguration() {
+            @Override
+            public Path rootFolder() {
+                return rootFolder;
+            }
+
+            @Override
+            public Optional<Predicate<Path>> fileFilter() {
+                return Optional.empty();
+            }
+        }, () -> dataStore) {
+            @Override
+            protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
+                return scannerOnPaths(asList(somePhotoPath, aSecondPhotoPath, aThirdPhotoPath));
+            }
+
+            @Override
+            protected MetadataReader createMetadataReader() {
+                return metadataReader;
+            }
+        };
+
+        sut.refresh();
+
+        verify(metadataReader).readFrom(somePhotoPath);
+        verify(metadataReader).readFrom(aSecondPhotoPath);
+        verify(metadataReader).readFrom(aThirdPhotoPath);
+
+        dataStore.photos().forEach(photo -> assertTrue(dataStore.metadataOf(photo).isPresent()));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static FilesystemScanner scannerOnPaths(Collection<Path> paths) {
+        try {
+            return mockFileScanner(invocation -> paths
+                    .forEach(path -> ((Consumer<Path>) invocation.getArguments()[1]).accept(path)));
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private static FilesystemScanner sleepingFilesystemScanner(int sleepFor) {
-        FilesystemScanner sleepingScanner = mock(FilesystemScanner.class);
         try {
-            Mockito.doAnswer(invocation -> {
-                Uninterruptibles.sleepUninterruptibly(sleepFor, MILLISECONDS);
-                return null;
-            }).when(sleepingScanner).scan(any(Path.class), any(Consumer.class));
+            return mockFileScanner(invocation -> Uninterruptibles.sleepUninterruptibly(sleepFor, MILLISECONDS));
         } catch (IOException e) {
-            fail();
+            return null;
         }
-        return sleepingScanner;
     }
 
     private static LibraryDataStore dataStoreContainingThreePhotos() {

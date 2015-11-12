@@ -28,7 +28,11 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 
-import static com.drew.metadata.exif.ExifDirectoryBase.*;
+import static com.drew.metadata.exif.ExifDirectoryBase.TAG_35MM_FILM_EQUIV_FOCAL_LENGTH;
+import static com.drew.metadata.exif.ExifDirectoryBase.TAG_DATETIME_ORIGINAL;
+import static com.drew.metadata.exif.ExifDirectoryBase.TAG_FNUMBER;
+import static com.drew.metadata.exif.ExifDirectoryBase.TAG_FOCAL_LENGTH;
+import static com.drew.metadata.exif.ExifDirectoryBase.TAG_ISO_EQUIVALENT;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
