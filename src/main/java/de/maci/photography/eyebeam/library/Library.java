@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -43,7 +44,6 @@ import static java.util.Objects.requireNonNull;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 30.09.15
  */
-// TODO Thread safety
 public class Library {
 
     private static final Logger logger = LoggerFactory.getLogger(Library.class);
@@ -82,7 +82,7 @@ public class Library {
     }
 
     public Set<Photo> photos() {
-        return dataStore.photos();
+        return new HashSet<>(dataStore.photos());
     }
 
     public long countPhotos() {
