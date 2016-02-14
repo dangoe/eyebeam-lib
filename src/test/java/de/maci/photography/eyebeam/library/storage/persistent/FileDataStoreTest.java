@@ -129,7 +129,10 @@ public class FileDataStoreTest {
         Photo photoWithMetadata = photoWithPath("/some/photo.jpg");
         sut.store(photoWithMetadata);
         Instant now = Instant.now();
-        Metadata metadata = new Metadata(42L, ExifData.fromFields(1d, 2, 3, 4, now));
+        Metadata metadata = new Metadata(42L,
+                                         null,
+                                         ExifData.empty().withFnumber(1d).withFocalLength(2)
+                                                 .withFocalLengthFullFrameEquivalent(3).withIso(4).withTakenAt(now));
         sut.replaceMetadata(photoWithMetadata, metadata);
         sut.store(photoWithPath("/some/other/photo.jpg"));
         sut.flush();
@@ -153,7 +156,10 @@ public class FileDataStoreTest {
         assertThat(sut.photos(),
                    containsInAnyOrder(photoWithPath("/some/photo.jpg"), photoWithPath("/some/other/photo.jpg")));
         assertThat(sut.metadataOf(photoWithPath("/some/photo.jpg")).get(), new MetadataMatcher(
-                new Metadata(42L, ExifData.fromFields(1d, 2, 3, 4, Instant.ofEpochSecond(1446905814, 284000000)))));
+                new Metadata(42L, null,
+                             ExifData.empty().withFnumber(1d).withFocalLength(2)
+                                     .withFocalLengthFullFrameEquivalent(3).withIso(4)
+                                     .withTakenAt(Instant.ofEpochSecond(1446905814, 284000000)))));
         assertFalse(sut.metadataOf(photoWithPath("/some/other/photo.jpg")).isPresent());
     }
 

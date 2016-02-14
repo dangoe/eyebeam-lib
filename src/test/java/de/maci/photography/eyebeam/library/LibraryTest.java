@@ -19,10 +19,12 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static de.maci.photography.eyebeam.library.testhelper.MockingHelper.mockFileScanner;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singleton;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -190,7 +192,7 @@ public class LibraryTest {
 
         LibraryDataStore dataStore = new InMemoryDataStore();
         MetadataReader metadataReader = mock(MetadataReader.class);
-        when(metadataReader.readFrom(any(Path.class))).thenReturn(Optional.of(Metadata.empty()));
+        when(metadataReader.readFrom(any(Path.class))).thenReturn(Metadata.empty());
 
         Library sut = new Library(new LibraryConfiguration() {
             @Override
@@ -202,15 +204,15 @@ public class LibraryTest {
             public Optional<Predicate<Path>> fileFilter() {
                 return Optional.empty();
             }
+
+            @Override
+            public Supplier<MetadataReader> metadataReader() {
+                return () -> metadataReader;
+            }
         }, () -> dataStore) {
             @Override
             protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
                 return scannerOnPaths(asList(somePhotoPath, aSecondPhotoPath, aThirdPhotoPath));
-            }
-
-            @Override
-            protected MetadataReader createMetadataReader() {
-                return metadataReader;
             }
         };
 
@@ -221,6 +223,41 @@ public class LibraryTest {
         verify(metadataReader).readFrom(aThirdPhotoPath);
 
         dataStore.photos().forEach(photo -> assertTrue(dataStore.metadataOf(photo).isPresent()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void aCustomMetadataReaderCanBeConfigured() throws Exception {
+        Path rootFolder = Paths.get("/some/folder");
+        Path somePhotoPath = rootFolder.resolve("somePhoto.jpg");
+
+        Supplier<MetadataReader> metadataReaderFactory = mock(Supplier.class);
+
+        Library sut = new Library(new LibraryConfiguration() {
+            @Override
+            public Path rootFolder() {
+                return rootFolder;
+            }
+
+            @Override
+            public Optional<Predicate<Path>> fileFilter() {
+                return Optional.empty();
+            }
+
+            @Override
+            public Supplier<MetadataReader> metadataReader() {
+                return metadataReaderFactory;
+            }
+        }, () -> mock(LibraryDataStore.class)) {
+            @Override
+            protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
+                return scannerOnPaths(singleton(somePhotoPath));
+            }
+        };
+
+        sut.refresh();
+
+        verify(metadataReaderFactory).get();
     }
 
     @SuppressWarnings("unchecked")

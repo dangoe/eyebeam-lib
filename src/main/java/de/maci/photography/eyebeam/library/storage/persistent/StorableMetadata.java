@@ -57,8 +57,10 @@ public class StorableMetadata implements Storable<Metadata> {
     @Nonnull
     @Override
     public Metadata unbox() {
-        return new Metadata(fileSize,
-                            ExifData.fromFields(fnumber, focalLength, focalLengthFullFrameEquivalent, iso, takenAt));
+        return new Metadata(fileSize, null,
+                            ExifData.empty().withFnumber(fnumber).withFocalLength(focalLength)
+                                    .withFocalLengthFullFrameEquivalent(focalLengthFullFrameEquivalent).withIso(iso)
+                                    .withTakenAt(takenAt));
     }
 
     public static StorableMetadata of(@Nonnull Metadata metadata) {

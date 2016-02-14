@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Stopwatch;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner.Options;
-import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataReader;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
@@ -68,12 +67,7 @@ public class Library {
         this.rootFolder = configuration.rootFolder();
 
         this.scanner = createScanner(configuration.fileFilter().orElse(path -> true));
-        this.metadataReader = createMetadataReader();
-    }
-
-    @VisibleForTesting
-    protected MetadataReader createMetadataReader() {
-        return new DefaultMetadataReader();
+        this.metadataReader = configuration.metadataReader().get();
     }
 
     @VisibleForTesting
@@ -103,9 +97,15 @@ public class Library {
                 scanner.scan(rootFolder, path -> dataStore.store(new Photo(rootFolder.relativize(path))));
 
                 photosWithoutExifData()
-                        .forEach(photo -> metadataReader.readFrom(rootFolder.resolve(photo.path()))
-                                                        .ifPresent(metadata -> dataStore
-                                                                .replaceMetadata(photo, metadata)));
+                        .forEach(photo -> {
+                            try {
+                                dataStore
+                                        .replaceMetadata(photo,
+                                                         metadataReader.readFrom(rootFolder.resolve(photo.path())));
+                            } catch (Exception e) {
+                                logger.error("Failed to update metadata.", e);
+                            }
+                        });
 
                 logger.info(String.format("The library has been refreshed in %d second(s).",
                                           stopwatch.elapsed(TimeUnit.SECONDS)));

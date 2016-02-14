@@ -17,7 +17,6 @@ package de.maci.photography.eyebeam.library.metadata;
 
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
-import java.util.Optional;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -26,5 +25,12 @@ import java.util.Optional;
 @FunctionalInterface
 public interface MetadataReader {
 
-    Optional<Metadata> readFrom(@Nonnull Path path);
+    /**
+     * Reads a photo's {@link Metadata} for a specific path.
+     *
+     * @param path The photo's path.
+     * @return The read {@link Metadata}.
+     * @throws MetadataReadingException Is thrown a the photo's metadata for the specific path could not be read.
+     */
+    Metadata readFrom(@Nonnull Path path);
 }

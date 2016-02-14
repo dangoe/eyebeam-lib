@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library;
-
-import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader;
-import de.maci.photography.eyebeam.library.metadata.MetadataReader;
-
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+package de.maci.photography.eyebeam.library.metadata;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 08.10.15
+ * @since 31.12.15
  */
-public interface LibraryConfiguration {
+public class MetadataReadingException extends RuntimeException {
 
-    Path rootFolder();
+    public MetadataReadingException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    Optional<Predicate<Path>> fileFilter();
+    public MetadataReadingException(String message) {
+        super(message);
+    }
 
-    default Supplier<MetadataReader> metadataReader() {
-        return () -> new DefaultMetadataReader();
+    public MetadataReadingException() {
+        super();
     }
 }

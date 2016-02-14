@@ -15,10 +15,9 @@
  */
 package de.maci.photography.eyebeam.library.metadata;
 
-import java.nio.file.Path;
-import java.util.Optional;
-
 import javax.annotation.Nonnull;
+import java.io.File;
+import java.nio.file.Path;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -26,10 +25,16 @@ import javax.annotation.Nonnull;
  */
 public class DefaultMetadataReader implements MetadataReader {
 
-    private final ExifDataReader exifDataReader = new ExifDataReader();
+    private final DefaultExifDataReader exifDataReader = new DefaultExifDataReader();
 
     @Override
-    public Optional<Metadata> readFrom(@Nonnull Path path) {
-        return exifDataReader.readFrom(path).map(exifData -> new Metadata(path.toFile().length(), exifData));
+    public Metadata readFrom(@Nonnull Path path) {
+        File file = path.toFile();
+        try {
+            return new Metadata(file.length(), null, exifDataReader.readFrom(path));
+        } catch (SecurityException e) {
+            throw new MetadataReadingException(String.format("Failed to read metadata of '%s'.",
+                                                             file.getAbsolutePath()), e);
+        }
     }
 }
