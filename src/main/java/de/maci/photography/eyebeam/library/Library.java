@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -53,7 +53,7 @@ public class Library {
     private final FilesystemScanner scanner;
     private final MetadataReader metadataReader;
 
-    private final AtomicBoolean refreshing = new AtomicBoolean(false);
+    private final ReentrantLock refreshLock = new ReentrantLock();
 
     @VisibleForTesting
     Library(@Nonnull LibraryConfiguration configuration,
@@ -84,13 +84,13 @@ public class Library {
     }
 
     public boolean isRefreshing() {
-        return refreshing.get();
+        return refreshLock.isLocked();
     }
 
     public void refresh() {
         logger.info("Refreshing library ...");
 
-        if (!refreshing.getAndSet(true)) {
+        if (refreshLock.tryLock()) {
             try {
                 Stopwatch stopwatch = Stopwatch.createStarted();
 
@@ -112,7 +112,7 @@ public class Library {
             } catch (IOException e) {
                 logger.error("Refresh failed.", e);
             } finally {
-                refreshing.set(false);
+                refreshLock.unlock();
             }
         }
     }
