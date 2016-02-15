@@ -15,7 +15,7 @@ public class PhotoTest {
 
     @Test
     public void filenameIsExtractedCorrectly() throws Exception {
-        Photo photo = new Photo(Paths.get(getClass().getResource("sample.jpg").toURI()));
+        Photo photo = Photo.locatedAt(Paths.get(getClass().getResource("sample.jpg").toURI()));
 
         assertThat(photo.filename(), equalTo("sample.jpg"));
     }

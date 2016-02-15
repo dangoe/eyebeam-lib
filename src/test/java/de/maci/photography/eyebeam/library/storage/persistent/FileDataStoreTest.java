@@ -36,11 +36,11 @@ public class FileDataStoreTest {
     public final ExpectedException expectedException = ExpectedException.none();
 
     private static Photo somePhoto() {
-        return new Photo(new File("").toPath());
+        return Photo.locatedAt(new File("").toPath());
     }
 
     private static Photo photoWithPath(String path) {
-        return new Photo(new File(path).toPath());
+        return Photo.locatedAt(new File(path).toPath());
     }
 
     @Test

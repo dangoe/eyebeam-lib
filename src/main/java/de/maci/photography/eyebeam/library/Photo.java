@@ -32,7 +32,7 @@ public final class Photo implements Comparable<Photo> {
     private final Path path;
     private final String filename;
 
-    public Photo(@Nonnull Path path) {
+    private Photo(@Nonnull Path path) {
         requireNonNull(path, "Path must not be null.");
         this.path = path;
         this.filename = path.getFileName().toString();
@@ -69,5 +69,9 @@ public final class Photo implements Comparable<Photo> {
         return MoreObjects.toStringHelper(this)
                           .add("path", path)
                           .toString();
+    }
+
+    public static Photo locatedAt(Path path) {
+        return new Photo(path);
     }
 }

@@ -45,6 +45,22 @@ import static java.util.Objects.requireNonNull;
  */
 public class Library {
 
+    @FunctionalInterface
+    public interface MetadataRefreshDecider {
+
+        boolean refreshRequired(Photo photo);
+    }
+
+    public static final class RefreshStrategies {
+
+        public static MetadataRefreshDecider refreshIfMissing(@Nonnull Library library) {
+            return photo -> {
+                Optional<Metadata> metadata = library.metadataOf(photo);
+                return !metadata.isPresent() || !metadata.get().exifData().isPresent();
+            };
+        }
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(Library.class);
 
     private final LibraryDataStore dataStore;
@@ -87,16 +103,16 @@ public class Library {
         return refreshLock.isLocked();
     }
 
-    public void refresh() {
+    public void refresh(@Nonnull MetadataRefreshDecider metadataRefreshDecider) {
         logger.info("Refreshing library ...");
 
         if (refreshLock.tryLock()) {
             try {
                 Stopwatch stopwatch = Stopwatch.createStarted();
 
-                scanner.scan(rootFolder, path -> dataStore.store(new Photo(rootFolder.relativize(path))));
+                scanner.scan(rootFolder, path -> dataStore.store(Photo.locatedAt(rootFolder.relativize(path))));
 
-                photosWithoutExifData()
+                photosWithMetadataToBeRefreshed(metadataRefreshDecider)
                         .forEach(photo -> {
                             try {
                                 dataStore
@@ -117,8 +133,10 @@ public class Library {
         }
     }
 
-    private Stream<Photo> photosWithoutExifData() {
-        return photos().stream().filter(photo -> !dataStore.metadataOf(photo).isPresent());
+    private Stream<Photo> photosWithMetadataToBeRefreshed(MetadataRefreshDecider metadataRefreshDecider) {
+        return photos().stream().filter(photo -> metadataRefreshDecider
+                .refreshRequired(photo) || !dataStore.metadataOf(photo)
+                                                     .isPresent());
     }
 
     public void clear() {

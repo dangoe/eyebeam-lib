@@ -41,7 +41,7 @@ public class StorablePhoto implements Storable<Photo>, Comparable<StorablePhoto>
     @Nonnull
     @Override
     public Photo unbox() {
-        return new Photo(new File(path).toPath());
+        return Photo.locatedAt(new File(path).toPath());
     }
 
     @Override

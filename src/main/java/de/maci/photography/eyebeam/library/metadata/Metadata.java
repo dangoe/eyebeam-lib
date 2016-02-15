@@ -19,13 +19,14 @@ import com.google.common.base.MoreObjects;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.time.Instant;
 import java.util.Optional;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 10.10.15
  */
-public final class Metadata {
+public class Metadata {
 
     public static final class ImageSize {
 
@@ -58,10 +59,16 @@ public final class Metadata {
     private final ImageSize imageSize;
     private final ExifData exifData;
 
-    public Metadata(@Nullable Long fileSize, @Nullable ImageSize imageSize, @Nullable ExifData exifData) {
+    private final Instant gatheredAt;
+
+    public Metadata(@Nullable Long fileSize,
+                    @Nullable ImageSize imageSize,
+                    @Nullable ExifData exifData) {
         this.fileSize = fileSize;
         this.imageSize = imageSize;
         this.exifData = exifData;
+
+        this.gatheredAt = Instant.now();
     }
 
     @Nonnull
@@ -77,6 +84,11 @@ public final class Metadata {
     @Nonnull
     public Optional<ExifData> exifData() {
         return Optional.ofNullable(exifData);
+    }
+
+    @Nonnull
+    public Instant extractedAt() {
+        return gatheredAt;
     }
 
     @Override
