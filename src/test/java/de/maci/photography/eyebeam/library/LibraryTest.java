@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static de.maci.photography.eyebeam.library.Library.RefreshStrategies.refreshIfMissing;
+import static de.maci.photography.eyebeam.library.Library.MetadataRefreshDeciders.refreshIfMissing;
 import static de.maci.photography.eyebeam.library.testhelper.MockingHelper.mockFileScanner;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;

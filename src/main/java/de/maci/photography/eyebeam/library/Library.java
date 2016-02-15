@@ -51,7 +51,7 @@ public class Library {
         boolean refreshRequired(Photo photo);
     }
 
-    public static final class RefreshStrategies {
+    public static final class MetadataRefreshDeciders {
 
         public static MetadataRefreshDecider refreshIfMissing(@Nonnull Library library) {
             return photo -> {
