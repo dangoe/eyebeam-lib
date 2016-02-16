@@ -53,9 +53,9 @@ public class LibraryReindexer {
 
     @VisibleForTesting
     protected LibraryReindexer(Library library,
-                             LibraryDataStore dataStore,
-                             LibraryConfiguration libraryConfiguration,
-                             ReindexingNecessaryDecision reindexingNecessaryDecision) {
+                               LibraryDataStore dataStore,
+                               LibraryConfiguration libraryConfiguration,
+                               ReindexingNecessaryDecision reindexingNecessaryDecision) {
         this.library = library;
         this.dataStore = dataStore;
         this.libraryConfiguration = libraryConfiguration;
