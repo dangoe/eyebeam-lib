@@ -52,7 +52,7 @@ import static java.util.Objects.requireNonNull;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 20.10.15
  */
-public class FileDataStore implements LibraryDataStore {
+public class FileDataStore implements LibraryDataStore, Persistable {
 
     private static final Type STORABLE_MAP_TYPE = new TypeToken<Map<StorablePhoto, StorableMetadata>>() {}.getType();
 
@@ -134,6 +134,7 @@ public class FileDataStore implements LibraryDataStore {
         delegate.clear();
     }
 
+    @Override
     public void flush() throws IOException {
         try (OutputStream os = outputStreamSupplier.get()) {
             try {
@@ -154,6 +155,7 @@ public class FileDataStore implements LibraryDataStore {
         return result;
     }
 
+    @Override
     public void restore() throws IOException {
         try (InputStream is = inputStreamSupplier.get()) {
             setDataFromStorables(createGson().fromJson(IOUtils.toString(is, UTF_8), STORABLE_MAP_TYPE));
