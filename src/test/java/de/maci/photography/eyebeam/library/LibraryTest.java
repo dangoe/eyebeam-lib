@@ -24,12 +24,12 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static de.maci.photography.eyebeam.library.Library.MetadataRefreshDeciders.refreshIfMissing;
 import static de.maci.photography.eyebeam.library.testhelper.MockingHelper.mockFileScanner;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
@@ -74,7 +74,7 @@ public class LibraryTest {
     @Test
     public void photosReturnsEmptySet_IfCorrespondingDataStoreIsEmpty() throws Exception {
         LibraryDataStore dataStore = new InMemoryDataStore();
-        Library sut = Library.newInstance(anyConfig(), () -> dataStore);
+        Library sut = Library.newInstance(dataStore, anyConfig());
 
         assertTrue(sut.photos().isEmpty());
     }
@@ -82,7 +82,7 @@ public class LibraryTest {
     @Test
     public void photosReturnsSetOfPhotosContainedInTheDatastore_IfCorrespondingDataStoreIsNotEmpty() throws Exception {
         LibraryDataStore dataStore = dataStoreContainingThreePhotos();
-        Library sut = Library.newInstance(anyConfig(), () -> dataStore);
+        Library sut = Library.newInstance(dataStore, anyConfig());
 
         List<Photo> expectedPhotos = new ArrayList<>(dataStore.photos());
 
@@ -94,21 +94,21 @@ public class LibraryTest {
 
     @Test
     public void countPhotosReturnsZero_IfCorrespondingDataStoreIsEmpty() throws Exception {
-        Library sut = Library.newInstance(anyConfig(), () -> new InMemoryDataStore());
+        Library sut = Library.newInstance(new InMemoryDataStore(), anyConfig());
 
         MatcherAssert.assertThat(sut.countPhotos(), equalTo(0L));
     }
 
     @Test
     public void countPhotosReturnsNumberOfPhotosContainedInTheDatastore_IfCorrespondingDataStoreIsNotEmpty() throws Exception {
-        Library sut = Library.newInstance(anyConfig(), () -> dataStoreContainingThreePhotos());
+        Library sut = Library.newInstance(dataStoreContainingThreePhotos(), anyConfig());
 
         MatcherAssert.assertThat(sut.countPhotos(), equalTo(3L));
     }
 
     @Test
     public void dataStoreCanBeCleared() throws Exception {
-        Library sut = Library.newInstance(anyConfig(), () -> dataStoreContainingThreePhotos());
+        Library sut = Library.newInstance(dataStoreContainingThreePhotos(), anyConfig());
         sut.clear();
 
         MatcherAssert.assertThat(sut.countPhotos(), equalTo(0L));
@@ -122,7 +122,7 @@ public class LibraryTest {
         LibraryDataStore dataStore = new InMemoryDataStore();
         dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
 
-        Library sut = Library.newInstance(anyConfig(), () -> dataStore);
+        Library sut = Library.newInstance(dataStore, anyConfig());
 
         sut.metadataOf(Photo.locatedAt(Paths.get("aSecondPhoto.jpg")));
     }
@@ -132,7 +132,7 @@ public class LibraryTest {
         LibraryDataStore dataStore = new InMemoryDataStore();
         dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
 
-        Library sut = Library.newInstance(anyConfig(), () -> dataStore);
+        Library sut = Library.newInstance(dataStore, anyConfig());
 
         assertFalse(sut.metadataOf(Photo.locatedAt(Paths.get("somePhoto.jpg"))).isPresent());
     }
@@ -146,14 +146,19 @@ public class LibraryTest {
         dataStore.store(photo);
         dataStore.replaceMetadata(photo, metadata);
 
-        Library sut = Library.newInstance(anyConfig(), () -> dataStore);
+        Library sut = Library.newInstance(dataStore, anyConfig());
 
         MatcherAssert.assertThat(sut.metadataOf(photo).get(), is(metadata));
     }
 
     @Test
-    public void refreshingFlagIsSet_IfLibraryIsRefreshing() throws Exception {
-        Library sut = new Library(anyConfig(), () -> new InMemoryDataStore()) {
+    public void refreshingFlagIsSet_IfLibraryIsReindexed() throws Exception {
+        InMemoryDataStore dataStore = new InMemoryDataStore();
+        LibraryConfiguration configuration = anyConfig();
+
+        Library sut = new Library(dataStore, configuration);
+
+        LibraryReindexer reindexer = new LibraryReindexer(sut, dataStore, configuration, photo -> true) {
 
             @Override
             protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
@@ -162,25 +167,25 @@ public class LibraryTest {
             }
         };
 
-        new Thread(() -> sut.refresh(refreshIfMissing(sut))).start();
+        new Thread(() -> reindexer.reindexLibrary()).start();
 
-        await().atMost(250, MILLISECONDS).until(() -> sut.isRefreshing());
-        await().atMost(1, SECONDS).until(() -> !sut.isRefreshing());
+        await().atMost(250, MILLISECONDS).until(() -> sut.isReindexing());
+        await().atMost(1, SECONDS).until(() -> !sut.isReindexing());
     }
 
     @Test
-    public void refreshingFlagIsNotSet_IfLibraryInstanceJustHasBeenCreated() throws Exception {
-        Library sut = Library.newInstance(anyConfig(), () -> new InMemoryDataStore());
+    public void reindexingFlagIsNotSet_IfLibraryInstanceJustHasBeenCreated() throws Exception {
+        Library sut = Library.newInstance(new InMemoryDataStore(), anyConfig());
 
-        assertFalse(sut.isRefreshing());
+        assertFalse(sut.isReindexing());
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    public void photosAreAddedWithRelativizedPathToTheDataStore_WhileRefreshing() throws Exception {
+    public void photosAreAddedWithRelativizedPathToTheDataStore_WhileReindexing() throws Exception {
         LibraryDataStore dataStore = mock(LibraryDataStore.class);
 
-        Library sut = new Library(new LibraryConfiguration() {
+        Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -190,9 +195,9 @@ public class LibraryTest {
             public Optional<Predicate<Path>> fileFilter() {
                 return Optional.empty();
             }
-        }, () -> dataStore);
+        });
 
-        sut.refresh(refreshIfMissing(sut));
+        sut.createReindexer().reindexLibrary();
 
         verify(dataStore).store(Photo.locatedAt(temporaryFolderPath.relativize(firstSampleFile)));
         verify(dataStore).store(Photo.locatedAt(temporaryFolderPath.relativize(secondSampleFile)));
@@ -200,13 +205,13 @@ public class LibraryTest {
     }
 
     @Test
-    public void metadataIsResolved_WhileRefreshing() throws Exception {
+    public void metadataIsResolved_WhileReindexing() throws Exception {
         LibraryDataStore dataStore = new InMemoryDataStore();
 
         MetadataReader metadataReader = mock(MetadataReader.class);
         when(metadataReader.readFrom(any(Path.class))).thenReturn(Metadata.empty());
 
-        Library sut = new Library(new LibraryConfiguration() {
+        Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -221,9 +226,9 @@ public class LibraryTest {
             public Supplier<MetadataReader> metadataReader() {
                 return () -> metadataReader;
             }
-        }, () -> dataStore);
+        });
 
-        sut.refresh(refreshIfMissing(sut));
+        sut.createReindexer().reindexLibrary();
 
         verify(metadataReader).readFrom(firstSampleFile);
         verify(metadataReader).readFrom(secondSampleFile);
@@ -237,7 +242,7 @@ public class LibraryTest {
     public void aCustomMetadataReaderCanBeConfigured() throws Exception {
         Supplier<MetadataReader> metadataReaderFactory = mock(Supplier.class);
 
-        Library sut = new Library(new LibraryConfiguration() {
+        Library sut = new Library(mock(LibraryDataStore.class), new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -252,9 +257,9 @@ public class LibraryTest {
             public Supplier<MetadataReader> metadataReader() {
                 return metadataReaderFactory;
             }
-        }, () -> mock(LibraryDataStore.class));
+        });
 
-        sut.refresh(refreshIfMissing(sut));
+        sut.createReindexer().reindexLibrary();
 
         verify(metadataReaderFactory).get();
     }
@@ -263,7 +268,7 @@ public class LibraryTest {
     public void presentMetadataIsNotRefreshed() throws Exception {
         LibraryDataStore dataStore = new InMemoryDataStore();
 
-        Library sut = new Library(new LibraryConfiguration() {
+        Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -273,15 +278,15 @@ public class LibraryTest {
             public Optional<Predicate<Path>> fileFilter() {
                 return Optional.empty();
             }
-        }, () -> dataStore);
+        });
 
-        sut.refresh(refreshIfMissing(sut));
+        sut.createReindexer().reindexLibrary();
 
         Metadata firstMetadata = sut.metadataOf(photo(firstSampleFile)).get();
         Metadata secondMetadata = sut.metadataOf(photo(secondSampleFile)).get();
         Metadata thirdMetadata = sut.metadataOf(photo(thirdSampleFile)).get();
 
-        sut.refresh(refreshIfMissing(sut));
+        sut.createReindexer().reindexLibrary();
 
         assertThat(sut.metadataOf(photo(firstSampleFile)).get().extractedAt(), equalTo(firstMetadata.extractedAt()));
         assertThat(sut.metadataOf(photo(secondSampleFile)).get().extractedAt(), equalTo(secondMetadata.extractedAt()));
@@ -292,7 +297,7 @@ public class LibraryTest {
     public void presentMetadataIsRefreshed_IfTheConfiguredRefreshDeciderEvaluatesToTrue() throws Exception {
         LibraryDataStore dataStore = new InMemoryDataStore();
 
-        Library sut = new Library(new LibraryConfiguration() {
+        Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -302,19 +307,36 @@ public class LibraryTest {
             public Optional<Predicate<Path>> fileFilter() {
                 return Optional.empty();
             }
-        }, () -> dataStore);
+        });
 
-        sut.refresh(refreshIfMissing(sut));
+        sut.createReindexer().reindexLibrary();
 
         Metadata firstMetadata = sut.metadataOf(photo(firstSampleFile)).get();
         Metadata secondMetadata = sut.metadataOf(photo(secondSampleFile)).get();
         Metadata thirdMetadata = sut.metadataOf(photo(thirdSampleFile)).get();
 
-        sut.refresh(p -> true);
+        sut.createReindexer().withCustomReindexingNecessaryDecision(photo -> true).reindexLibrary();
 
         assertTrue(sut.metadataOf(photo(firstSampleFile)).get().extractedAt().isAfter(firstMetadata.extractedAt()));
         assertTrue(sut.metadataOf(photo(secondSampleFile)).get().extractedAt().isAfter(secondMetadata.extractedAt()));
         assertTrue(sut.metadataOf(photo(thirdSampleFile)).get().extractedAt().isAfter(thirdMetadata.extractedAt()));
+    }
+
+    @Test
+    public void aNewUpdaterInstanceCanBeCreated() throws Exception {
+        Library sut = Library.newInstance(mock(LibraryDataStore.class), new LibraryConfiguration() {
+            @Override
+            public Path rootFolder() {
+                return temporaryFolderPath;
+            }
+
+            @Override
+            public Optional<Predicate<Path>> fileFilter() {
+                return Optional.empty();
+            }
+        });
+
+        assertThat(sut.createReindexer(), notNullValue());
     }
 
     @SuppressWarnings("unchecked")

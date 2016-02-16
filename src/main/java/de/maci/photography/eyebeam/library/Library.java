@@ -16,26 +16,14 @@
 package de.maci.photography.eyebeam.library;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Stopwatch;
-import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
-import de.maci.photography.eyebeam.library.indexing.FilesystemScanner.Options;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
-import de.maci.photography.eyebeam.library.metadata.MetadataReader;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -45,50 +33,18 @@ import static java.util.Objects.requireNonNull;
  */
 public class Library {
 
-    @FunctionalInterface
-    public interface MetadataRefreshDecider {
-
-        boolean refreshRequired(Photo photo);
-    }
-
-    public static final class MetadataRefreshDeciders {
-
-        public static MetadataRefreshDecider refreshIfMissing(@Nonnull Library library) {
-            return photo -> {
-                Optional<Metadata> metadata = library.metadataOf(photo);
-                return !metadata.isPresent() || !metadata.get().exifData().isPresent();
-            };
-        }
-    }
-
-    private static final Logger logger = LoggerFactory.getLogger(Library.class);
-
     private final LibraryDataStore dataStore;
-    private final Path rootFolder;
+    private final LibraryConfiguration configuration;
 
-    private final FilesystemScanner scanner;
-    private final MetadataReader metadataReader;
-
-    private final ReentrantLock refreshLock = new ReentrantLock();
+    private final ReentrantLock reindexingLock = new ReentrantLock();
 
     @VisibleForTesting
-    Library(@Nonnull LibraryConfiguration configuration,
-            @Nonnull Supplier<LibraryDataStore> newDataStoreInstanceSupplier) {
+    Library(@Nonnull LibraryDataStore dataStore, @Nonnull LibraryConfiguration configuration) {
+        requireNonNull(dataStore, "Data store must not be null.");
         requireNonNull(configuration, "Configuration must not be null.");
-        requireNonNull(newDataStoreInstanceSupplier, "New data store instance supplier must not be null.");
 
-        this.dataStore = newDataStoreInstanceSupplier.get();
-        requireNonNull(dataStore, "Data store instance must not be null.");
-
-        this.rootFolder = configuration.rootFolder();
-
-        this.scanner = createScanner(configuration.fileFilter().orElse(path -> true));
-        this.metadataReader = configuration.metadataReader().get();
-    }
-
-    @VisibleForTesting
-    protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
-        return FilesystemScanner.newInstance(fileFilter, Options.newInstance().followSymlinks(true));
+        this.dataStore = dataStore;
+        this.configuration = configuration;
     }
 
     public Set<Photo> photos() {
@@ -99,44 +55,20 @@ public class Library {
         return dataStore.size();
     }
 
-    public boolean isRefreshing() {
-        return refreshLock.isLocked();
+    boolean lockForReindexing() {
+        return reindexingLock.tryLock();
     }
 
-    public void refresh(@Nonnull MetadataRefreshDecider metadataRefreshDecider) {
-        logger.info("Refreshing library ...");
-
-        if (refreshLock.tryLock()) {
-            try {
-                Stopwatch stopwatch = Stopwatch.createStarted();
-
-                scanner.scan(rootFolder, path -> dataStore.store(Photo.locatedAt(rootFolder.relativize(path))));
-
-                photosWithMetadataToBeRefreshed(metadataRefreshDecider)
-                        .forEach(photo -> {
-                            try {
-                                dataStore
-                                        .replaceMetadata(photo,
-                                                         metadataReader.readFrom(rootFolder.resolve(photo.path())));
-                            } catch (Exception e) {
-                                logger.error("Failed to update metadata.", e);
-                            }
-                        });
-
-                logger.info(String.format("The library has been refreshed in %d second(s).",
-                                          stopwatch.elapsed(TimeUnit.SECONDS)));
-            } catch (IOException e) {
-                logger.error("Refresh failed.", e);
-            } finally {
-                refreshLock.unlock();
-            }
-        }
+    void unlock() {
+        reindexingLock.unlock();
     }
 
-    private Stream<Photo> photosWithMetadataToBeRefreshed(MetadataRefreshDecider metadataRefreshDecider) {
-        return photos().stream().filter(photo -> metadataRefreshDecider
-                .refreshRequired(photo) || !dataStore.metadataOf(photo)
-                                                     .isPresent());
+    public boolean isReindexing() {
+        return reindexingLock.isLocked();
+    }
+
+    public LibraryReindexer createReindexer() {
+        return LibraryReindexer.newInstance(this, dataStore, configuration);
     }
 
     public void clear() {
@@ -147,8 +79,8 @@ public class Library {
         return dataStore.metadataOf(photo);
     }
 
-    public static Library newInstance(@Nonnull LibraryConfiguration configuration,
-                                      @Nonnull Supplier<LibraryDataStore> newDataStoreInstanceSupplier) {
-        return new Library(configuration, newDataStoreInstanceSupplier);
+    public static Library newInstance(@Nonnull LibraryDataStore dataStore,
+                                      @Nonnull LibraryConfiguration configuration) {
+        return new Library(dataStore, configuration);
     }
 }
