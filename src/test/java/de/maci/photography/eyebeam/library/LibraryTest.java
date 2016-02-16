@@ -16,7 +16,7 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -27,6 +27,7 @@ import static com.jayway.awaitility.Awaitility.await;
 import static de.maci.photography.eyebeam.library.testhelper.MockingHelper.mockFileScanner;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -73,10 +74,10 @@ public class LibraryTest {
 
     @Test
     public void photosReturnsEmptySet_IfCorrespondingDataStoreIsEmpty() throws Exception {
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        assertTrue(sut.photos().isEmpty());
+        assertThat(sut.photos().count(), equalTo(0L));
     }
 
     @Test
@@ -84,9 +85,9 @@ public class LibraryTest {
         LibraryDataStore dataStore = dataStoreContainingThreePhotos();
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        List<Photo> expectedPhotos = new ArrayList<>(dataStore.photos());
+        List<Photo> expectedPhotos = dataStore.photos().collect(toList());
 
-        MatcherAssert.assertThat(sut.photos(),
+        MatcherAssert.assertThat(sut.photos().collect(toList()),
                                  containsInAnyOrder(expectedPhotos.get(0),
                                                     expectedPhotos.get(1),
                                                     expectedPhotos.get(2)));
@@ -94,7 +95,7 @@ public class LibraryTest {
 
     @Test
     public void countPhotosReturnsZero_IfCorrespondingDataStoreIsEmpty() throws Exception {
-        Library sut = Library.newInstance(new InMemoryDataStore(), anyConfig());
+        Library sut = Library.newInstance(InMemoryDataStore.empty(), anyConfig());
 
         MatcherAssert.assertThat(sut.countPhotos(), equalTo(0L));
     }
@@ -119,7 +120,7 @@ public class LibraryTest {
         expectedException.expect(NoSuchElementException.class);
         expectedException.expectMessage("Data store does not contain 'aSecondPhoto.jpg'.");
 
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
         dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
 
         Library sut = Library.newInstance(dataStore, anyConfig());
@@ -129,7 +130,7 @@ public class LibraryTest {
 
     @Test
     public void metadataIsAbsent_IfTheDataStoreContainsTheCorrespondingPhotoButNoMetadataInformationIsAvailable() throws Exception {
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
         dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
 
         Library sut = Library.newInstance(dataStore, anyConfig());
@@ -142,7 +143,7 @@ public class LibraryTest {
         Photo photo = Photo.locatedAt(Paths.get("somePhoto.jpg"));
         Metadata metadata = Metadata.empty();
 
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
         dataStore.store(photo);
         dataStore.replaceMetadata(photo, metadata);
 
@@ -153,7 +154,7 @@ public class LibraryTest {
 
     @Test
     public void refreshingFlagIsSet_IfLibraryIsReindexed() throws Exception {
-        InMemoryDataStore dataStore = new InMemoryDataStore();
+        InMemoryDataStore dataStore = InMemoryDataStore.empty();
         LibraryConfiguration configuration = anyConfig();
 
         Library sut = new Library(dataStore, configuration);
@@ -175,7 +176,7 @@ public class LibraryTest {
 
     @Test
     public void reindexingFlagIsNotSet_IfLibraryInstanceJustHasBeenCreated() throws Exception {
-        Library sut = Library.newInstance(new InMemoryDataStore(), anyConfig());
+        Library sut = Library.newInstance(InMemoryDataStore.empty(), anyConfig());
 
         assertFalse(sut.isReindexing());
     }
@@ -184,6 +185,7 @@ public class LibraryTest {
     @SuppressWarnings("unchecked")
     public void photosAreAddedWithRelativizedPathToTheDataStore_WhileReindexing() throws Exception {
         LibraryDataStore dataStore = mock(LibraryDataStore.class);
+        when(dataStore.photos()).thenReturn(Collections.<Photo>emptySet().stream());
 
         Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
@@ -206,7 +208,7 @@ public class LibraryTest {
 
     @Test
     public void metadataIsResolved_WhileReindexing() throws Exception {
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
 
         MetadataReader metadataReader = mock(MetadataReader.class);
         when(metadataReader.readFrom(any(Path.class))).thenReturn(Metadata.empty());
@@ -242,7 +244,7 @@ public class LibraryTest {
     public void aCustomMetadataReaderCanBeConfigured() throws Exception {
         Supplier<MetadataReader> metadataReaderFactory = mock(Supplier.class);
 
-        Library sut = new Library(mock(LibraryDataStore.class), new LibraryConfiguration() {
+        Library sut = new Library(InMemoryDataStore.empty(), new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -266,7 +268,7 @@ public class LibraryTest {
 
     @Test
     public void presentMetadataIsNotRefreshed() throws Exception {
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
 
         Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
@@ -295,7 +297,7 @@ public class LibraryTest {
 
     @Test
     public void presentMetadataIsRefreshed_IfTheConfiguredRefreshDeciderEvaluatesToTrue() throws Exception {
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
 
         Library sut = new Library(dataStore, new LibraryConfiguration() {
             @Override
@@ -345,7 +347,7 @@ public class LibraryTest {
     }
 
     private static LibraryDataStore dataStoreContainingThreePhotos() {
-        LibraryDataStore dataStore = new InMemoryDataStore();
+        LibraryDataStore dataStore = InMemoryDataStore.empty();
         dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
         dataStore.store(Photo.locatedAt(Paths.get("aSecondPhoto.jpg")));
         dataStore.store(Photo.locatedAt(Paths.get("aThirdPhoto.jpg")));

@@ -23,10 +23,9 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
-import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -37,6 +36,19 @@ public final class InMemoryDataStore implements LibraryDataStore {
 
     private final Map<Photo, Metadata> photos = new TreeMap<>(Photo::compareTo);
 
+    private InMemoryDataStore() {
+        super();
+    }
+
+    public static InMemoryDataStore empty() {
+        return new InMemoryDataStore();
+    }
+
+    @Override
+    public boolean metadataExists(@Nonnull Photo photo) {
+        return metadataOf(photo).isPresent();
+    }
+
     @Override
     public Optional<Metadata> metadataOf(@Nonnull Photo photo) {
         requireNonNull(photo, "Corresponding photo must not be null.");
@@ -45,8 +57,8 @@ public final class InMemoryDataStore implements LibraryDataStore {
     }
 
     @Override
-    public Set<Photo> photos() {
-        return unmodifiableSet(photos.keySet());
+    public Stream<Photo> photos() {
+        return photos.keySet().stream();
     }
 
     @Override

@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -103,7 +102,7 @@ public class LibraryReindexer {
     }
 
     private Stream<Photo> photosWithMetadataToBeRefreshed() {
-        return dataStore.photos().stream().filter(photo -> reindexingNecessaryDecision.check(photo));
+        return dataStore.photos().filter(photo -> reindexingNecessaryDecision.check(photo));
     }
 
     public LibraryReindexer withCustomReindexingNecessaryDecision(@Nonnull ReindexingNecessaryDecision decision) {
@@ -119,9 +118,6 @@ public class LibraryReindexer {
     }
 
     private static ReindexingNecessaryDecision refreshIfMetadataOrExifIsMissing(LibraryDataStore dataStore) {
-        return photo -> {
-            Optional<Metadata> metadata = dataStore.metadataOf(photo);
-            return !metadata.isPresent() || !metadata.get().exifData().isPresent();
-        };
+        return photo -> !dataStore.metadataExists(photo) || !dataStore.metadataOf(photo).get().exifData().isPresent();
     }
 }

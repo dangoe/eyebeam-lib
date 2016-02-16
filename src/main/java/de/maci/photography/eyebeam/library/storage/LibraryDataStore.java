@@ -21,7 +21,7 @@ import de.maci.photography.eyebeam.library.metadata.Metadata;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -29,9 +29,17 @@ import java.util.Set;
  */
 public interface LibraryDataStore {
 
+    /**
+     * Checks if metadata for the given photo is present without loading the metadata information.
+     *
+     * @param photo The corresponding photo.
+     * @return <code>true</code>, if metadata for the given photo is present.
+     */
+    boolean metadataExists(@Nonnull Photo photo);
+
     Optional<Metadata> metadataOf(@Nonnull Photo photo);
 
-    Set<Photo> photos();
+    Stream<Photo> photos();
 
     boolean contains(@Nullable Photo photo);
 

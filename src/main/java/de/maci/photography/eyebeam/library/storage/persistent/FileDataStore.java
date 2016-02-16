@@ -41,9 +41,9 @@ import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static java.util.Objects.requireNonNull;
@@ -75,7 +75,7 @@ public class FileDataStore implements LibraryDataStore, Persistable {
         requireNonNull(outputStreamSupplier, "OutputStream supplier must not be null");
         this.inputStreamSupplier = inputStreamSupplier;
         this.outputStreamSupplier = outputStreamSupplier;
-        this.delegate = new InMemoryDataStore();
+        this.delegate = InMemoryDataStore.empty();
     }
 
     private static InputStream createCompressedFileInputStream(@Nonnull Path dataDirectory) {
@@ -95,12 +95,17 @@ public class FileDataStore implements LibraryDataStore, Persistable {
     }
 
     @Override
+    public boolean metadataExists(@Nonnull Photo photo) {
+        return delegate.metadataExists(photo);
+    }
+
+    @Override
     public Optional<Metadata> metadataOf(@Nonnull Photo photo) {
         return delegate.metadataOf(photo);
     }
 
     @Override
-    public Set<Photo> photos() {
+    public Stream<Photo> photos() {
         return delegate.photos();
     }
 
@@ -148,10 +153,10 @@ public class FileDataStore implements LibraryDataStore, Persistable {
 
     private Map<StorablePhoto, StorableMetadata> mapDataToStorables() throws JAXBException {
         Map<StorablePhoto, StorableMetadata> result = new TreeMap<>();
-        for (Photo photo : photos()) {
+        photos().forEach(photo -> {
             Optional<Metadata> metadata = metadataOf(photo);
             result.put(StorablePhoto.of(photo), metadata.isPresent() ? StorableMetadata.of(metadata.get()) : null);
-        }
+        });
         return result;
     }
 

@@ -20,10 +20,9 @@ import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 
 import javax.annotation.Nonnull;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -47,8 +46,8 @@ public class Library {
         this.configuration = configuration;
     }
 
-    public Set<Photo> photos() {
-        return new HashSet<>(dataStore.photos());
+    public Stream<Photo> photos() {
+        return dataStore.photos();
     }
 
     public long countPhotos() {

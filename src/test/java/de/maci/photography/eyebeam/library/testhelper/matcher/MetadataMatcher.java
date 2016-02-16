@@ -37,15 +37,14 @@ public class MetadataMatcher extends TypeSafeMatcher<Metadata> {
 
     @Override
     protected boolean matchesSafely(Metadata metadata) {
-        //formatter:off
         Optional<ExifData> expectedExifData = expected.exifData();
         Optional<ExifData> exifData = metadata.exifData();
 
         return Objects.equals(expected.fileSize(), metadata.fileSize())
+                && Objects.equals(expected.imageSize(), metadata.imageSize())
                 && (!expectedExifData.isPresent() && !exifData.isPresent()
                 || expectedExifData.isPresent() && exifData.isPresent()
                 && new ExifDataMatcher(expectedExifData.get()).matchesSafely(exifData.get()));
-        // formatter:on
     }
 
     @Override
