@@ -16,8 +16,6 @@
 package de.maci.photography.eyebeam.library.metadata;
 
 import com.google.common.base.MoreObjects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -29,8 +27,6 @@ import java.util.Optional;
  * @since 02.10.15
  */
 public class ExifData {
-
-    private static final Logger logger = LoggerFactory.getLogger(ExifData.class);
 
     private final Double fnumber;
     private final Integer focalLength;

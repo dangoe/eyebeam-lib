@@ -15,21 +15,19 @@
  */
 package de.maci.photography.eyebeam.library.storage;
 
-import static java.util.Collections.unmodifiableSet;
-import static java.util.Objects.requireNonNull;
+import de.maci.photography.eyebeam.library.Photo;
+import de.maci.photography.eyebeam.library.metadata.Metadata;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
-import de.maci.photography.eyebeam.library.Photo;
-import de.maci.photography.eyebeam.library.metadata.Metadata;
-import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
+import static java.util.Collections.unmodifiableSet;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
