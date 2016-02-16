@@ -24,12 +24,4 @@ public class MetadataReadingException extends RuntimeException {
     public MetadataReadingException(String message, Throwable cause) {
         super(message, cause);
     }
-
-    public MetadataReadingException(String message) {
-        super(message);
-    }
-
-    public MetadataReadingException() {
-        super();
-    }
 }
