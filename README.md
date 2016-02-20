@@ -1,4 +1,4 @@
-# eyebeam-lib (1.0.0-alpha)
+# eyebeam-lib (1.0.0-beta)
 
 This library provides basic functionality to index photos including their corresponding metadata.
 For information about supported image formats, see [metadata-extractor](https://github.com/drewnoakes/metadata-extractor).
