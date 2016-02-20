@@ -15,12 +15,7 @@
  */
 package de.maci.photography.eyebeam.library.indexing;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.nio.file.Files.walkFileTree;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
-import static java.util.Objects.requireNonNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -32,7 +27,10 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import javax.annotation.Nonnull;
+import static java.nio.file.Files.walkFileTree;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -48,7 +46,9 @@ public class FilesystemScanner {
         protected final Set<FileVisitOption> fileVisitOptions;
 
         private Options(int maxDepth, Set<FileVisitOption> fileVisitOptions) {
-            checkArgument(maxDepth > 0, "Max depth must be a positive number.");
+            if (maxDepth <= 0) {
+                throw new IllegalArgumentException("Max depth must be a positive number.");
+            }
             this.maxDepth = maxDepth;
             this.fileVisitOptions = fileVisitOptions;
         }

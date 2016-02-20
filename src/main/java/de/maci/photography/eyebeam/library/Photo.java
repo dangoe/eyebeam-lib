@@ -15,8 +15,6 @@
  */
 package de.maci.photography.eyebeam.library;
 
-import com.google.common.base.MoreObjects;
-
 import javax.annotation.Nonnull;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -66,9 +64,10 @@ public final class Photo implements Comparable<Photo> {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
-                          .add("path", path)
-                          .toString();
+        final StringBuffer sb = new StringBuffer("Photo{");
+        sb.append("path=").append(path);
+        sb.append('}');
+        return sb.toString();
     }
 
     public static Photo locatedAt(Path path) {

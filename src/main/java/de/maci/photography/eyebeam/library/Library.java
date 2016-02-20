@@ -15,7 +15,6 @@
  */
 package de.maci.photography.eyebeam.library;
 
-import com.google.common.annotations.VisibleForTesting;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataAccessor;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
@@ -38,11 +37,9 @@ public class Library implements MetadataAccessor {
 
     private final ReentrantLock reindexingLock = new ReentrantLock();
 
-    @VisibleForTesting
-    Library(@Nonnull LibraryDataStore dataStore, @Nonnull LibraryConfiguration configuration) {
+    private Library(@Nonnull LibraryDataStore dataStore, @Nonnull LibraryConfiguration configuration) {
         requireNonNull(dataStore, "Data store must not be null.");
         requireNonNull(configuration, "Configuration must not be null.");
-
         this.dataStore = dataStore;
         this.configuration = configuration;
     }

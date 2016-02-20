@@ -15,8 +15,6 @@
  */
 package de.maci.photography.eyebeam.library;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataReader;
@@ -50,7 +48,7 @@ public class LibraryReindexer {
 
     private final ReindexingNecessaryDecision reindexingNecessaryDecision;
 
-    @VisibleForTesting
+    // For testing purposes only
     protected LibraryReindexer(Library library,
                                LibraryDataStore dataStore,
                                LibraryConfiguration libraryConfiguration,
@@ -61,7 +59,7 @@ public class LibraryReindexer {
         this.reindexingNecessaryDecision = reindexingNecessaryDecision;
     }
 
-    @VisibleForTesting
+    // For testing purposes only
     protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
         return FilesystemScanner.newInstance(fileFilter, FilesystemScanner.Options.newInstance().followSymlinks(true));
     }
@@ -94,7 +92,7 @@ public class LibraryReindexer {
                             }
                         });
             } catch (IOException e) {
-                Throwables.propagate(e);
+                throw new IllegalStateException(e);
             } finally {
                 library.unlock();
             }

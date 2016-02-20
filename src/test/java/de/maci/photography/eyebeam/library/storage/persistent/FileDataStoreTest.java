@@ -1,6 +1,5 @@
 package de.maci.photography.eyebeam.library.storage.persistent;
 
-import com.google.common.base.Charsets;
 import de.maci.photography.eyebeam.library.Photo;
 import de.maci.photography.eyebeam.library.metadata.ExifData;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
@@ -11,10 +10,8 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 
@@ -26,8 +23,6 @@ import static org.hamcrest.collection.IsIterableContainingInAnyOrder.containsInA
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -41,17 +36,9 @@ public class FileDataStoreTest {
     @Rule
     public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-    private static Photo somePhoto() {
-        return Photo.locatedAt(new File("").toPath());
-    }
-
-    private static Photo photoWithPath(String path) {
-        return Photo.locatedAt(new File(path).toPath());
-    }
-
     @Test
     public void containsNoData_IfNewInstance() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
 
         assertThat(sut.photos().collect(toSet()), emptyIterable());
         assertThat(sut.size(), equalTo(0L));
@@ -59,7 +46,7 @@ public class FileDataStoreTest {
 
     @Test
     public void aPhotoCanBeAdded_IfTheDataStoreIsEmpty() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         Photo photo = somePhoto();
 
         assertTrue(sut.store(photo));
@@ -69,7 +56,7 @@ public class FileDataStoreTest {
 
     @Test
     public void aPhotoIsNotAdded_IfAlreadyContainedInTheDataStore() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         Photo photo = somePhoto();
         sut.store(photo);
 
@@ -78,7 +65,7 @@ public class FileDataStoreTest {
 
     @Test
     public void metadataCannotBeSet_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
 
         String path = "/some/path.jpg";
 
@@ -90,7 +77,7 @@ public class FileDataStoreTest {
 
     @Test
     public void metadataCanBeSet_IfTheCorrespondingPhotoIsContainedInTheDataStore() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         Photo photo = somePhoto();
         sut.store(photo);
         Metadata metadata = Metadata.empty();
@@ -101,7 +88,7 @@ public class FileDataStoreTest {
 
     @Test
     public void metadataCannotBeRead_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
 
         String path = "/some/photo.jpg";
 
@@ -113,14 +100,14 @@ public class FileDataStoreTest {
 
     @Test
     public void emptyDataStoreIsEmpty_IfCleared() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         sut.clear();
         assertThat(sut.size(), equalTo(0L));
     }
 
     @Test
     public void nonEmptyDataStoreIsEmpty_IfCleared() throws Exception {
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         sut.store(photoWithPath("/some/photo.jpg"));
         sut.store(photoWithPath("/some/other/photo.jpg"));
         sut.clear();
@@ -132,7 +119,7 @@ public class FileDataStoreTest {
     public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
         Photo photo = somePhoto();
 
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         sut.store(photo);
 
         assertFalse(sut.metadataExists(photo));
@@ -143,7 +130,7 @@ public class FileDataStoreTest {
         Photo photo = somePhoto();
         Metadata metadata = Metadata.empty();
 
-        FileDataStore sut = someFileDataStore();
+        FileDataStore sut = newFileDataStore();
         sut.store(photo);
         sut.replaceMetadata(photo, metadata);
 
@@ -152,10 +139,7 @@ public class FileDataStoreTest {
 
     @Test
     public void aDataStoreCanBeFlushedAndRestored() throws Exception {
-        File dbFile = temporaryFolder.newFile("fileStore.dat");
-        FileOutputStream outputStream = new FileOutputStream(dbFile);
-        FileInputStream inputStream = new FileInputStream(dbFile);
-        FileDataStore sut = new FileDataStore(() -> inputStream, () -> outputStream);
+        FileDataStore sut = newFileDataStore();
         Photo photoWithMetadata = photoWithPath("/some/photo.jpg");
         sut.store(photoWithMetadata);
         Instant now = Instant.now();
@@ -177,9 +161,10 @@ public class FileDataStoreTest {
 
     @Test
     public void aDataStoreCanBeRestored() throws Exception {
-        InputStream inputStream = getClass().getResourceAsStream("fileStore.dat");
+        Files.copy(getClass().getResourceAsStream("photos.dat"),
+                   Paths.get(temporaryFolder.getRoot().toPath().toString(), "photos.dat"));
 
-        FileDataStore sut = new FileDataStore(() -> inputStream, () -> mock(OutputStream.class));
+        FileDataStore sut = newFileDataStore();
         sut.restore();
 
         assertThat(sut.photos().collect(toSet()),
@@ -192,18 +177,15 @@ public class FileDataStoreTest {
         assertFalse(sut.metadataOf(photoWithPath("/some/other/photo.jpg")).isPresent());
     }
 
-    @Test
-    public void emptyMapIsWrittenToOutputStream_IfEmpty() throws Exception {
-        FileOutputStream outputStream = mock(FileOutputStream.class);
-        FileDataStore sut = new FileDataStore(() -> mock(InputStream.class), () -> outputStream);
-        sut.flush();
-
-        verify(outputStream).write("{}".getBytes(Charsets.UTF_8));
-        verify(outputStream).flush();
-        verify(outputStream).close();
+    private static Photo somePhoto() {
+        return Photo.locatedAt(new File("").toPath());
     }
 
-    private static FileDataStore someFileDataStore() {
-        return new FileDataStore(() -> mock(InputStream.class), () -> mock(OutputStream.class));
+    private static Photo photoWithPath(String path) {
+        return Photo.locatedAt(new File(path).toPath());
+    }
+
+    private FileDataStore newFileDataStore() {
+        return new FileDataStore(temporaryFolder.getRoot().toPath());
     }
 }

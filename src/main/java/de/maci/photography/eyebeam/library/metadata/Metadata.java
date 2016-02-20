@@ -15,8 +15,6 @@
  */
 package de.maci.photography.eyebeam.library.metadata;
 
-import com.google.common.base.MoreObjects;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Instant;
@@ -48,10 +46,11 @@ public class Metadata {
 
         @Override
         public String toString() {
-            return MoreObjects.toStringHelper(this)
-                              .add("height", height)
-                              .add("width", width)
-                              .toString();
+            final StringBuffer sb = new StringBuffer("ImageSize{");
+            sb.append("width=").append(width);
+            sb.append(", height=").append(height);
+            sb.append('}');
+            return sb.toString();
         }
     }
 
@@ -93,11 +92,12 @@ public class Metadata {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this)
-                          .add("fileSize", fileSize())
-                          .add("imageSize", imageSize())
-                          .add("exifData", exifData())
-                          .toString();
+        final StringBuffer sb = new StringBuffer("Metadata{");
+        sb.append("exifData=").append(exifData);
+        sb.append(", fileSize=").append(fileSize);
+        sb.append(", imageSize=").append(imageSize);
+        sb.append('}');
+        return sb.toString();
     }
 
     public static Metadata empty() {

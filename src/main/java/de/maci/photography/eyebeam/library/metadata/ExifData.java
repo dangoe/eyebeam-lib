@@ -15,8 +15,6 @@
  */
 package de.maci.photography.eyebeam.library.metadata;
 
-import com.google.common.base.MoreObjects;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Instant;
@@ -73,10 +71,14 @@ public class ExifData {
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("takenAt", takenAt()).add("focalLength", focalLength())
-                          .add("focalLengthFullFrameEquivalent", focalLengthFullFrameEquivalent())
-                          .add("fnumber", fnumber())
-                          .add("iso", iso()).toString();
+        final StringBuffer sb = new StringBuffer("ExifData{");
+        sb.append("fnumber=").append(fnumber);
+        sb.append(", focalLength=").append(focalLength);
+        sb.append(", focalLengthFullFrameEquivalent=").append(focalLengthFullFrameEquivalent);
+        sb.append(", iso=").append(iso);
+        sb.append(", takenAt=").append(takenAt);
+        sb.append('}');
+        return sb.toString();
     }
 
     public ExifData withFnumber(@Nullable Double fnumber) {

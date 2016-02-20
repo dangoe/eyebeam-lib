@@ -1,6 +1,5 @@
 package de.maci.photography.eyebeam.library;
 
-import com.google.common.util.concurrent.Uninterruptibles;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataReader;
@@ -183,7 +182,7 @@ public class LibraryTest {
         InMemoryDataStore dataStore = InMemoryDataStore.empty();
         LibraryConfiguration configuration = anyConfig();
 
-        Library sut = new Library(dataStore, configuration);
+        Library sut = Library.newInstance(dataStore, configuration);
 
         LibraryReindexer reindexer = new LibraryReindexer(sut, dataStore, configuration, photo -> true) {
 
@@ -213,7 +212,7 @@ public class LibraryTest {
         LibraryDataStore dataStore = mock(LibraryDataStore.class);
         when(dataStore.photos()).thenReturn(Collections.<Photo>emptySet().stream());
 
-        Library sut = new Library(dataStore, new LibraryConfiguration() {
+        Library sut = Library.newInstance(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -239,7 +238,7 @@ public class LibraryTest {
         MetadataReader metadataReader = mock(MetadataReader.class);
         when(metadataReader.readFrom(any(Path.class))).thenReturn(Metadata.empty());
 
-        Library sut = new Library(dataStore, new LibraryConfiguration() {
+        Library sut = Library.newInstance(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -270,7 +269,7 @@ public class LibraryTest {
     public void aCustomMetadataReaderCanBeConfigured() throws Exception {
         Supplier<MetadataReader> metadataReaderFactory = mock(Supplier.class);
 
-        Library sut = new Library(InMemoryDataStore.empty(), new LibraryConfiguration() {
+        Library sut = Library.newInstance(InMemoryDataStore.empty(), new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -296,7 +295,7 @@ public class LibraryTest {
     public void presentMetadataIsNotRefreshed() throws Exception {
         LibraryDataStore dataStore = InMemoryDataStore.empty();
 
-        Library sut = new Library(dataStore, new LibraryConfiguration() {
+        Library sut = Library.newInstance(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -325,7 +324,7 @@ public class LibraryTest {
     public void presentMetadataIsRefreshed_IfTheConfiguredRefreshDeciderEvaluatesToTrue() throws Exception {
         LibraryDataStore dataStore = InMemoryDataStore.empty();
 
-        Library sut = new Library(dataStore, new LibraryConfiguration() {
+        Library sut = Library.newInstance(dataStore, new LibraryConfiguration() {
             @Override
             public Path rootFolder() {
                 return temporaryFolderPath;
@@ -369,7 +368,13 @@ public class LibraryTest {
 
     @SuppressWarnings("unchecked")
     private static FilesystemScanner sleepingFilesystemScanner(int sleepFor) {
-        return mockFileScanner(invocation -> Uninterruptibles.sleepUninterruptibly(sleepFor, MILLISECONDS));
+        return mockFileScanner(invocation -> {
+            try {
+                Thread.sleep(sleepFor);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException(e);
+            }
+        });
     }
 
     private static LibraryDataStore dataStoreContainingThreePhotos() {

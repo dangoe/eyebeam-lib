@@ -15,7 +15,6 @@
  */
 package de.maci.photography.eyebeam.library.storage.persistent;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -25,6 +24,7 @@ import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.utils.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +42,8 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
 /**
@@ -56,42 +54,20 @@ public class FileDataStore implements LibraryDataStore, Persistable {
 
     private static final Type STORABLE_MAP_TYPE = new TypeToken<Map<StorablePhoto, StorableMetadata>>() {}.getType();
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String dbFileName = "photos.dat";
 
-    private final Supplier<InputStream> inputStreamSupplier;
-    private final Supplier<OutputStream> outputStreamSupplier;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final LibraryDataStore delegate;
 
+    private final Path dataDirectory;
+
     public FileDataStore(@Nonnull Path dataDirectory) {
-        this(() -> createCompressedFileInputStream(dataDirectory),
-             () -> createCompressedFileOutputStream(dataDirectory));
-    }
+        requireNonNull(dataDirectory, "Data directory path must not be null!");
 
-    @VisibleForTesting
-    FileDataStore(@Nonnull Supplier<InputStream> inputStreamSupplier,
-                  @Nonnull Supplier<OutputStream> outputStreamSupplier) {
-        requireNonNull(inputStreamSupplier, "InputStream supplier must not be null");
-        requireNonNull(outputStreamSupplier, "OutputStream supplier must not be null");
-        this.inputStreamSupplier = inputStreamSupplier;
-        this.outputStreamSupplier = outputStreamSupplier;
         this.delegate = InMemoryDataStore.empty();
-    }
 
-    private static InputStream createCompressedFileInputStream(@Nonnull Path dataDirectory) {
-        try {
-            return new GzipCompressorInputStream(new FileInputStream(dataDirectory.resolve("photos.dat").toFile()));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static OutputStream createCompressedFileOutputStream(@Nonnull Path dataDirectory) {
-        try {
-            return new GzipCompressorOutputStream(new FileOutputStream(dataDirectory.resolve("photos.dat").toFile()));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
+        this.dataDirectory = dataDirectory;
     }
 
     @Override
@@ -142,9 +118,9 @@ public class FileDataStore implements LibraryDataStore, Persistable {
 
     @Override
     public void flush() throws IOException {
-        try (OutputStream os = outputStreamSupplier.get()) {
+        try (OutputStream os = createCompressedFileOutputStream()) {
             try {
-                os.write(createGson().toJson(mapDataToStorables()).getBytes(UTF_8));
+                os.write(createGson().toJson(mapDataToStorables()).getBytes(Charsets.UTF_8));
             } catch (JAXBException e) {
                 logger.error("Failed to serialize data.", e);
             }
@@ -163,8 +139,8 @@ public class FileDataStore implements LibraryDataStore, Persistable {
 
     @Override
     public void restore() throws IOException {
-        try (InputStream is = inputStreamSupplier.get()) {
-            setDataFromStorables(createGson().fromJson(IOUtils.toString(is, UTF_8), STORABLE_MAP_TYPE));
+        try (InputStream is = createCompressedFileInputStream()) {
+            setDataFromStorables(createGson().fromJson(IOUtils.toString(is, Charsets.UTF_8), STORABLE_MAP_TYPE));
         }
     }
 
@@ -184,5 +160,21 @@ public class FileDataStore implements LibraryDataStore, Persistable {
 
     private static Gson createGson() {
         return new GsonBuilder().enableComplexMapKeySerialization().create();
+    }
+
+    private InputStream createCompressedFileInputStream() {
+        try {
+            return new GzipCompressorInputStream(new FileInputStream(dataDirectory.resolve(dbFileName).toFile()));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private OutputStream createCompressedFileOutputStream() {
+        try {
+            return new GzipCompressorOutputStream(new FileOutputStream(dataDirectory.resolve(dbFileName).toFile()));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }
