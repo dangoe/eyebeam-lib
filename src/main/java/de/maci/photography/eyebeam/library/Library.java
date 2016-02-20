@@ -17,6 +17,7 @@ package de.maci.photography.eyebeam.library;
 
 import com.google.common.annotations.VisibleForTesting;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
+import de.maci.photography.eyebeam.library.metadata.MetadataAccessor;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 
 import javax.annotation.Nonnull;
@@ -30,7 +31,7 @@ import static java.util.Objects.requireNonNull;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 30.09.15
  */
-public class Library {
+public class Library implements MetadataAccessor {
 
     private final LibraryDataStore dataStore;
     private final LibraryConfiguration configuration;
@@ -74,6 +75,13 @@ public class Library {
         dataStore.clear();
     }
 
+    @Override
+    public boolean metadataExists(@Nonnull Photo photo) {
+        return dataStore.metadataExists(photo);
+    }
+
+    @Nonnull
+    @Override
     public Optional<Metadata> metadataOf(@Nonnull Photo photo) {
         return dataStore.metadataOf(photo);
     }

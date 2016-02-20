@@ -49,6 +49,7 @@ public final class InMemoryDataStore implements LibraryDataStore {
         return metadataOf(photo).isPresent();
     }
 
+    @Nonnull
     @Override
     public Optional<Metadata> metadataOf(@Nonnull Photo photo) {
         requireNonNull(photo, "Corresponding photo must not be null.");

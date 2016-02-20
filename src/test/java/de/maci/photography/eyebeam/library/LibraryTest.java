@@ -153,6 +153,32 @@ public class LibraryTest {
     }
 
     @Test
+    public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
+        Photo photo = Photo.locatedAt(Paths.get("somePhoto.jpg"));
+
+        InMemoryDataStore dataStore = InMemoryDataStore.empty();
+        dataStore.store(photo);
+
+        Library sut = Library.newInstance(dataStore, anyConfig());
+
+        assertFalse(sut.metadataExists(photo));
+    }
+
+    @Test
+    public void metadataExistsEvaluatesToTrue_IfMetadataIsPresent() throws Exception {
+        Photo photo = Photo.locatedAt(Paths.get("somePhoto.jpg"));
+        Metadata metadata = Metadata.empty();
+
+        InMemoryDataStore dataStore = InMemoryDataStore.empty();
+        dataStore.store(photo);
+        dataStore.replaceMetadata(photo, metadata);
+
+        Library sut = Library.newInstance(dataStore, anyConfig());
+
+        assertTrue(sut.metadataExists(photo));
+    }
+
+    @Test
     public void refreshingFlagIsSet_IfLibraryIsReindexed() throws Exception {
         InMemoryDataStore dataStore = InMemoryDataStore.empty();
         LibraryConfiguration configuration = anyConfig();

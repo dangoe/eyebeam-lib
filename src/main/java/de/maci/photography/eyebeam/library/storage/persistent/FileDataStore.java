@@ -99,6 +99,7 @@ public class FileDataStore implements LibraryDataStore, Persistable {
         return delegate.metadataExists(photo);
     }
 
+    @Nonnull
     @Override
     public Optional<Metadata> metadataOf(@Nonnull Photo photo) {
         return delegate.metadataOf(photo);
