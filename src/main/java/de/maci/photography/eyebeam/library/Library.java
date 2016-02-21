@@ -44,6 +44,10 @@ public class Library implements MetadataAccessor {
         this.configuration = configuration;
     }
 
+    LibraryDataStore dataStore() {
+        return dataStore;
+    }
+
     public Stream<Photo> photos() {
         return dataStore.photos();
     }
@@ -65,7 +69,7 @@ public class Library implements MetadataAccessor {
     }
 
     public LibraryReindexer createReindexer() {
-        return LibraryReindexer.newInstance(this, dataStore, configuration);
+        return LibraryReindexer.newInstance(this, configuration);
     }
 
     public void clear() {

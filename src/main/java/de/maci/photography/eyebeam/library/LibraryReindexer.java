@@ -43,18 +43,15 @@ public class LibraryReindexer {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Library library;
-    private final LibraryDataStore dataStore;
     private final LibraryConfiguration libraryConfiguration;
 
     private final ReindexingNecessaryDecision reindexingNecessaryDecision;
 
     // For testing purposes only
     protected LibraryReindexer(Library library,
-                               LibraryDataStore dataStore,
                                LibraryConfiguration libraryConfiguration,
                                ReindexingNecessaryDecision reindexingNecessaryDecision) {
         this.library = library;
-        this.dataStore = dataStore;
         this.libraryConfiguration = libraryConfiguration;
         this.reindexingNecessaryDecision = reindexingNecessaryDecision;
     }
@@ -79,13 +76,14 @@ public class LibraryReindexer {
                 MetadataReader metadataReader = libraryConfiguration.metadataReader().get();
 
                 createScanner(fileFilter())
-                        .scan(rootFolder, path -> dataStore.store(Photo.locatedAt(rootFolder.relativize(path))));
+                        .scan(rootFolder,
+                              path -> library.dataStore().store(Photo.locatedAt(rootFolder.relativize(path))));
 
                 photosWithMetadataToBeRefreshed()
                         .forEach(photo -> {
                             try {
                                 Metadata metadata = metadataReader.readFrom(rootFolder.resolve(photo.path()));
-                                dataStore.replaceMetadata(photo, metadata);
+                                library.dataStore().replaceMetadata(photo, metadata);
                             } catch (Exception e) {
                                 // Process should not be interrupted if a single exception occurs
                                 logger.warn("Failed to read metadata for '" + photo.path() + "'.", e);
@@ -100,18 +98,18 @@ public class LibraryReindexer {
     }
 
     private Stream<Photo> photosWithMetadataToBeRefreshed() {
-        return dataStore.photos().filter(photo -> reindexingNecessaryDecision.check(photo));
+        return library.photos().filter(photo -> reindexingNecessaryDecision.check(photo));
     }
 
     public LibraryReindexer withCustomReindexingNecessaryDecision(@Nonnull ReindexingNecessaryDecision decision) {
-        return new LibraryReindexer(library, dataStore, libraryConfiguration, decision);
+        return new LibraryReindexer(library, libraryConfiguration, decision);
     }
 
     static LibraryReindexer newInstance(@Nonnull Library library,
-                                        @Nonnull LibraryDataStore dataStore,
                                         @Nonnull LibraryConfiguration libraryConfiguration) {
-        return new LibraryReindexer(library, dataStore, libraryConfiguration,
-                                    refreshIfMetadataOrExifIsMissing(dataStore));
+        return new LibraryReindexer(library,
+                                    libraryConfiguration,
+                                    refreshIfMetadataOrExifIsMissing(library.dataStore()));
 
     }
 

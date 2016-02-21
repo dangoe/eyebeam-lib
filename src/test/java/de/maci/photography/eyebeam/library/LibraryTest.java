@@ -184,7 +184,7 @@ public class LibraryTest {
 
         Library sut = Library.newInstance(dataStore, configuration);
 
-        LibraryReindexer reindexer = new LibraryReindexer(sut, dataStore, configuration, photo -> true) {
+        LibraryReindexer reindexer = new LibraryReindexer(sut, configuration, photo -> true) {
 
             @Override
             protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
