@@ -19,8 +19,6 @@ import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataReader;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -40,14 +38,12 @@ public class LibraryReindexer {
         boolean check(Photo photo);
     }
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final Library library;
     private final LibraryConfiguration libraryConfiguration;
 
     private final ReindexingNecessaryDecision reindexingNecessaryDecision;
 
-    // For testing purposes only
+    // Visible for testing
     protected LibraryReindexer(Library library,
                                LibraryConfiguration libraryConfiguration,
                                ReindexingNecessaryDecision reindexingNecessaryDecision) {
@@ -56,7 +52,7 @@ public class LibraryReindexer {
         this.reindexingNecessaryDecision = reindexingNecessaryDecision;
     }
 
-    // For testing purposes only
+    // Visible for testing
     protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
         return FilesystemScanner.newInstance(fileFilter, FilesystemScanner.Options.newInstance().followSymlinks(true));
     }
@@ -72,29 +68,33 @@ public class LibraryReindexer {
     public void reindexLibrary() {
         if (library.lockForReindexing()) {
             try {
-                Path rootFolder = rootFolder();
-                MetadataReader metadataReader = libraryConfiguration.metadataReader().get();
-
-                createScanner(fileFilter())
-                        .scan(rootFolder,
-                              path -> library.dataStore().store(Photo.locatedAt(rootFolder.relativize(path))));
-
-                photosWithMetadataToBeRefreshed()
-                        .forEach(photo -> {
-                            try {
-                                Metadata metadata = metadataReader.readFrom(rootFolder.resolve(photo.path()));
-                                library.dataStore().replaceMetadata(photo, metadata);
-                            } catch (Exception e) {
-                                // Process should not be interrupted if a single exception occurs
-                                logger.warn("Failed to read metadata for '" + photo.path() + "'.", e);
-                            }
-                        });
+                checkForNewPhotos();
+                updateMetadata();
             } catch (IOException e) {
                 throw new IllegalStateException(e);
             } finally {
                 library.unlock();
             }
         }
+    }
+
+    private void checkForNewPhotos() throws IOException {
+        Path rootFolder = rootFolder();
+
+        createScanner(fileFilter())
+                .scan(rootFolder,
+                      path -> library.dataStore().store(Photo.locatedAt(rootFolder.relativize(path))));
+    }
+
+    private void updateMetadata() {
+        Path rootFolder = rootFolder();
+        MetadataReader metadataReader = libraryConfiguration.metadataReader().get();
+
+        photosWithMetadataToBeRefreshed()
+                .forEach(photo -> {
+                    Metadata metadata = metadataReader.readFrom(rootFolder.resolve(photo.path()));
+                    library.dataStore().replaceMetadata(photo, metadata);
+                });
     }
 
     private Stream<Photo> photosWithMetadataToBeRefreshed() {
