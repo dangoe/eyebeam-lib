@@ -1,5 +1,7 @@
 # eyebeam-lib (1.0.0-beta)
 
+[![Build Status](https://travis-ci.org/dangoe/eyebeam-lib.svg?branch=develop)](https://travis-ci.org/dangoe/eyebeam-lib)
+
 This library provides basic functionality to index photos including their corresponding metadata.
 For information about supported image formats, see [metadata-extractor](https://github.com/drewnoakes/metadata-extractor).
 
