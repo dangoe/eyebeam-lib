@@ -1,26 +1,20 @@
 /**
- * Copyright (c) 2015 Daniel Götten
- * <p/>
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to
- * do so, subject to the following conditions:
- * <p/>
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * <p/>
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright 2015 Daniel Götten
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package de.maci.photography.eyebeam.library.storage.persistent;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -30,6 +24,7 @@ import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.utils.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,71 +32,57 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.xml.bind.JAXBException;
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-import static com.google.common.base.Charsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 20.10.15
  */
-public class FileDataStore implements LibraryDataStore {
+public class FileDataStore implements LibraryDataStore, Persistable {
 
     private static final Type STORABLE_MAP_TYPE = new TypeToken<Map<StorablePhoto, StorableMetadata>>() {}.getType();
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final String dbFileName = "photos.dat";
 
-    private final Supplier<InputStream> inputStreamSupplier;
-    private final Supplier<OutputStream> outputStreamSupplier;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final LibraryDataStore delegate;
 
+    private final Path dataDirectory;
+
     public FileDataStore(@Nonnull Path dataDirectory) {
-        this(() -> createCompressedFileInputStream(dataDirectory),
-             () -> createCompressedFileOutputStream(dataDirectory));
+        requireNonNull(dataDirectory, "Data directory path must not be null!");
+
+        this.delegate = InMemoryDataStore.empty();
+
+        this.dataDirectory = dataDirectory;
     }
 
-    @VisibleForTesting
-    FileDataStore(@Nonnull Supplier<InputStream> inputStreamSupplier,
-                  @Nonnull Supplier<OutputStream> outputStreamSupplier) {
-        requireNonNull(inputStreamSupplier, "InputStream supplier must not be null");
-        requireNonNull(outputStreamSupplier, "OutputStream supplier must not be null");
-        this.inputStreamSupplier = inputStreamSupplier;
-        this.outputStreamSupplier = outputStreamSupplier;
-        this.delegate = new InMemoryDataStore();
+    @Override
+    public boolean metadataExists(@Nonnull Photo photo) {
+        return delegate.metadataExists(photo);
     }
 
-    private static InputStream createCompressedFileInputStream(@Nonnull Path dataDirectory) {
-        try {
-            return new GzipCompressorInputStream(new FileInputStream(dataDirectory.resolve("photos.dat").toFile()));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static OutputStream createCompressedFileOutputStream(@Nonnull Path dataDirectory) {
-        try {
-            return new GzipCompressorOutputStream(new FileOutputStream(dataDirectory.resolve("photos.dat").toFile()));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
+    @Nonnull
     @Override
     public Optional<Metadata> metadataOf(@Nonnull Photo photo) {
         return delegate.metadataOf(photo);
     }
 
     @Override
-    public Set<Photo> photos() {
+    public Stream<Photo> photos() {
         return delegate.photos();
     }
 
@@ -135,10 +116,11 @@ public class FileDataStore implements LibraryDataStore {
         delegate.clear();
     }
 
+    @Override
     public void flush() throws IOException {
-        try (OutputStream os = outputStreamSupplier.get()) {
+        try (OutputStream os = createCompressedFileOutputStream()) {
             try {
-                os.write(createGson().toJson(mapDataToStorables()).getBytes(UTF_8));
+                os.write(createGson().toJson(mapDataToStorables()).getBytes(Charsets.UTF_8));
             } catch (JAXBException e) {
                 logger.error("Failed to serialize data.", e);
             }
@@ -148,16 +130,17 @@ public class FileDataStore implements LibraryDataStore {
 
     private Map<StorablePhoto, StorableMetadata> mapDataToStorables() throws JAXBException {
         Map<StorablePhoto, StorableMetadata> result = new TreeMap<>();
-        for (Photo photo : photos()) {
+        photos().forEach(photo -> {
             Optional<Metadata> metadata = metadataOf(photo);
             result.put(StorablePhoto.of(photo), metadata.isPresent() ? StorableMetadata.of(metadata.get()) : null);
-        }
+        });
         return result;
     }
 
+    @Override
     public void restore() throws IOException {
-        try (InputStream is = inputStreamSupplier.get()) {
-            setDataFromStorables(createGson().fromJson(IOUtils.toString(is, UTF_8), STORABLE_MAP_TYPE));
+        try (InputStream is = createCompressedFileInputStream()) {
+            setDataFromStorables(createGson().fromJson(IOUtils.toString(is, Charsets.UTF_8), STORABLE_MAP_TYPE));
         }
     }
 
@@ -177,5 +160,21 @@ public class FileDataStore implements LibraryDataStore {
 
     private static Gson createGson() {
         return new GsonBuilder().enableComplexMapKeySerialization().create();
+    }
+
+    private InputStream createCompressedFileInputStream() {
+        try {
+            return new GzipCompressorInputStream(new FileInputStream(dataDirectory.resolve(dbFileName).toFile()));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private OutputStream createCompressedFileOutputStream() {
+        try {
+            return new GzipCompressorOutputStream(new FileOutputStream(dataDirectory.resolve(dbFileName).toFile()));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

@@ -1,14 +1,14 @@
 package de.maci.photography.eyebeam.library.metadata;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -17,26 +17,28 @@ import static org.junit.Assert.assertThat;
  */
 public class DefaultMetadataReaderTest {
 
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
+
     private final MetadataReader sut = new DefaultMetadataReader();
 
     @Test
     public void testReadExifData_ReturnsEmpty_IfFileDoesNotExist() throws Exception {
-        Optional<Metadata> metadata =
-                sut.readFrom(Paths.get(getClass().getResource(".").toString(), UUID.randomUUID().toString()));
+        expectedException.expect(MetadataReadingException.class);
 
-        assertFalse(metadata.isPresent());
+        sut.readFrom(Paths.get(getClass().getResource(".").toString(), UUID.randomUUID().toString()));
     }
 
     @Test
     public void testReadExifData_ReturnsEmpty_IfFileIsNotASupportedImage() throws Exception {
-        Optional<Metadata> metadata = sut.readFrom(Paths.get(getClass().getResource("test.txt").toURI()));
+        expectedException.expect(MetadataReadingException.class);
 
-        assertFalse(metadata.isPresent());
+        sut.readFrom(Paths.get(getClass().getResource("test.txt").toURI()));
     }
 
     @Test
     public void testReadExifData_ReturnsValidMetadata_IfFileIsASupportedImage() throws Exception {
-        Metadata metadata = sut.readFrom(Paths.get(getClass().getResource("sample.jpg").toURI())).get();
+        Metadata metadata = sut.readFrom(Paths.get(getClass().getResource("sample.jpg").toURI()));
         ExifData exifData = metadata.exifData().get();
 
         assertThat(metadata.fileSize().get(), equalTo(157933L));

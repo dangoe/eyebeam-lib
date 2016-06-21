@@ -16,7 +16,11 @@ import java.util.function.Predicate;
 
 import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
-import static org.mockito.Mockito.*;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>

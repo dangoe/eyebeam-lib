@@ -10,9 +10,12 @@ import java.io.File;
 import java.util.NoSuchElementException;
 
 import static java.util.Collections.singleton;
+import static java.util.stream.Collectors.toSet;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.collection.IsEmptyIterable.emptyIterable;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -25,25 +28,25 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void containsNoData_IfNewInstance() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
 
-        assertThat(sut.photos(), emptyIterable());
+        assertThat(sut.photos().collect(toSet()), emptyIterable());
         assertThat(sut.size(), equalTo(0L));
     }
 
     @Test
     public void aPhotoCanBeAdded_IfTheDataStoreIsEmpty() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
         Photo photo = somePhoto();
 
         assertTrue(sut.store(photo));
         assertTrue(sut.contains(photo));
-        assertThat(sut.photos(), equalTo(singleton(photo)));
+        assertThat(sut.photos().collect(toSet()), equalTo(singleton(photo)));
     }
 
     @Test
     public void aPhotoIsNotAdded_IfAlreadyContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
         Photo photo = somePhoto();
 
         sut.store(photo);
@@ -52,7 +55,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void metadataCannotBeSet_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
 
         String path = "/some/path.jpg";
 
@@ -64,7 +67,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void metadataCanBeSet_IfTheCorrespondingPhotoIsContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
         Photo photo = somePhoto();
         sut.store(photo);
         Metadata metadata = Metadata.empty();
@@ -75,7 +78,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void metadataCannotBeRead_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
 
         String path = "/some/photo.jpg";
 
@@ -86,8 +89,30 @@ public class InMemoryDataStoreTest {
     }
 
     @Test
+    public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
+        Photo photo = somePhoto();
+
+        InMemoryDataStore sut = InMemoryDataStore.empty();
+        sut.store(photo);
+
+        assertFalse(sut.metadataExists(photo));
+    }
+
+    @Test
+    public void metadataExistsEvaluatesToTrue_IfMetadataIsPresent() throws Exception {
+        Photo photo = somePhoto();
+        Metadata metadata = Metadata.empty();
+
+        InMemoryDataStore sut = InMemoryDataStore.empty();
+        sut.store(photo);
+        sut.replaceMetadata(photo, metadata);
+
+        assertTrue(sut.metadataExists(photo));
+    }
+
+    @Test
     public void emptyDataStoreIsEmpty_IfCleared() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
         sut.clear();
 
         assertThat(sut.size(), equalTo(0L));
@@ -95,7 +120,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void nonEmptyDataStoreIsEmpty_IfCleared() throws Exception {
-        InMemoryDataStore sut = new InMemoryDataStore();
+        InMemoryDataStore sut = InMemoryDataStore.empty();
         sut.store(photoWithPath("/some/photo.jpg"));
         sut.store(photoWithPath("/some/other/photo.jpg"));
         sut.clear();
@@ -104,10 +129,10 @@ public class InMemoryDataStoreTest {
     }
 
     private static Photo somePhoto() {
-        return new Photo(new File("").toPath());
+        return Photo.locatedAt(new File("").toPath());
     }
 
     private static Photo photoWithPath(String path) {
-        return new Photo(new File(path).toPath());
+        return Photo.locatedAt(new File(path).toPath());
     }
 }

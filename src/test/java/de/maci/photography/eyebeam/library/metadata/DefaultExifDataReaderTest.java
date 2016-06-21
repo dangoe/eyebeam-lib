@@ -1,42 +1,44 @@
 package de.maci.photography.eyebeam.library.metadata;
 
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.equalTo;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 09.10.15
  */
-public class ExifDataReaderTest {
+public class DefaultExifDataReaderTest {
 
-    private final ExifDataReader sut = new ExifDataReader();
+    @Rule
+    public final ExpectedException expectedException = ExpectedException.none();
+
+    private final DefaultExifDataReader sut = new DefaultExifDataReader();
 
     @Test
     public void testReadExifData_ReturnsEmpty_IfFileDoesNotExist() throws Exception {
-        Optional<ExifData> exifData =
-                sut.readFrom(Paths.get(getClass().getResource(".").toString(), UUID.randomUUID().toString()));
+        expectedException.expect(MetadataReadingException.class);
 
-        assertFalse(exifData.isPresent());
+        sut.readFrom(Paths.get(getClass().getResource(".").toString(), UUID.randomUUID().toString()));
     }
 
     @Test
     public void testReadExifData_ReturnsEmpty_IfFileIsNotASupportedImage() throws Exception {
-        Optional<ExifData> exifData = sut.readFrom(Paths.get(getClass().getResource("test.txt").toURI()));
+        expectedException.expect(MetadataReadingException.class);
 
-        assertFalse(exifData.isPresent());
+        sut.readFrom(Paths.get(getClass().getResource("test.txt").toURI()));
     }
 
     @Test
     public void testReadExifData_ReturnsValidExifData_IfFileIsASupportedImage() throws Exception {
-        ExifData exifData = sut.readFrom(Paths.get(getClass().getResource("sample.jpg").toURI())).get();
+        ExifData exifData = sut.readFrom(Paths.get(getClass().getResource("sample.jpg").toURI()));
 
         assertThat(exifData.fnumber().get(), equalTo(8d));
         assertThat(exifData.focalLength().get(), equalTo(25));

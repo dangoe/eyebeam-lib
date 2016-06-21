@@ -1,39 +1,24 @@
 /**
- * Copyright (c) 2015 Daniel Götten
- * <p/>
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to
- * do so, subject to the following conditions:
- * <p/>
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * <p/>
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright 2015 Daniel Götten
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package de.maci.photography.eyebeam.library.metadata;
-
-import com.drew.metadata.Metadata;
-import com.drew.metadata.MetadataException;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
-import com.google.common.base.MoreObjects;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Optional;
-
-import static com.drew.metadata.exif.ExifDirectoryBase.*;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
@@ -41,24 +26,17 @@ import static com.drew.metadata.exif.ExifDirectoryBase.*;
  */
 public class ExifData {
 
-    @FunctionalInterface
-    private interface ThrowingMetadataException<T> {
-        T perform() throws MetadataException;
-    }
-
-    private static final Logger logger = LoggerFactory.getLogger(ExifData.class);
-
     private final Double fnumber;
     private final Integer focalLength;
     private final Integer focalLengthFullFrameEquivalent;
     private final Integer iso;
     private final Instant takenAt;
 
-    private ExifData(Double fnumber,
-                     Integer focalLength,
-                     Integer focalLengthFullFrameEquivalent,
-                     Integer iso,
-                     Instant takenAt) {
+    private ExifData(@Nullable Double fnumber,
+                     @Nullable Integer focalLength,
+                     @Nullable Integer focalLengthFullFrameEquivalent,
+                     @Nullable Integer iso,
+                     @Nullable Instant takenAt) {
         this.fnumber = fnumber;
         this.focalLength = focalLength;
         this.focalLengthFullFrameEquivalent = focalLengthFullFrameEquivalent;
@@ -66,58 +44,64 @@ public class ExifData {
         this.takenAt = takenAt;
     }
 
+    @Nonnull
     public Optional<Double> fnumber() {
         return Optional.ofNullable(fnumber);
     }
 
+    @Nonnull
     public Optional<Integer> focalLength() {
         return Optional.ofNullable(focalLength);
     }
 
+    @Nonnull
     public Optional<Integer> focalLengthFullFrameEquivalent() {
         return Optional.ofNullable(focalLengthFullFrameEquivalent);
     }
 
+    @Nonnull
     public Optional<Integer> iso() {
         return Optional.ofNullable(iso);
     }
 
+    @Nonnull
     public Optional<Instant> takenAt() {
         return Optional.ofNullable(takenAt);
     }
 
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this).add("takenAt", takenAt()).add("focalLength", focalLength())
-                          .add("focalLengthFullFrameEquivalent", focalLengthFullFrameEquivalent())
-                          .add("fnumber", fnumber())
-                          .add("iso", iso()).toString();
+        final StringBuffer sb = new StringBuffer("ExifData{");
+        sb.append("fnumber=").append(fnumber);
+        sb.append(", focalLength=").append(focalLength);
+        sb.append(", focalLengthFullFrameEquivalent=").append(focalLengthFullFrameEquivalent);
+        sb.append(", iso=").append(iso);
+        sb.append(", takenAt=").append(takenAt);
+        sb.append('}');
+        return sb.toString();
     }
 
-    private static <T> Optional<T> tryExecute(ThrowingMetadataException<T> action) {
-        try {
-            return Optional.ofNullable(action.perform());
-        } catch (MetadataException e) {
-            logger.debug("Failed to read EXIF value.", e);
-            return Optional.empty();
-        }
-    }
-
-    public static ExifData fromMetadata(@Nonnull Metadata metadata) {
-        ExifSubIFDDirectory directory = metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
-        return new ExifData(tryExecute(() -> directory.getDouble(TAG_FNUMBER)).orElse(null),
-                            tryExecute(() -> directory.getInteger(TAG_FOCAL_LENGTH)).orElse(null),
-                            tryExecute(() -> directory.getInteger(TAG_35MM_FILM_EQUIV_FOCAL_LENGTH)).orElse(null),
-                            tryExecute(() -> directory.getInteger(TAG_ISO_EQUIVALENT)).orElse(null),
-                            tryExecute(() -> directory.getDate(TAG_DATETIME_ORIGINAL)).map(Date::toInstant)
-                                                                                      .orElse(null));
-    }
-
-    public static ExifData fromFields(@Nullable Double fnumber,
-                                      @Nullable Integer focalLength,
-                                      @Nullable Integer focalLengthFullFrameEquivalent,
-                                      @Nullable Integer iso,
-                                      @Nullable Instant takenAt) {
+    public ExifData withFnumber(@Nullable Double fnumber) {
         return new ExifData(fnumber, focalLength, focalLengthFullFrameEquivalent, iso, takenAt);
+    }
+
+    public ExifData withFocalLength(@Nullable Integer focalLength) {
+        return new ExifData(fnumber, focalLength, focalLengthFullFrameEquivalent, iso, takenAt);
+    }
+
+    public ExifData withFocalLengthFullFrameEquivalent(@Nullable Integer focalLengthFullFrameEquivalent) {
+        return new ExifData(fnumber, focalLength, focalLengthFullFrameEquivalent, iso, takenAt);
+    }
+
+    public ExifData withIso(@Nullable Integer iso) {
+        return new ExifData(fnumber, focalLength, focalLengthFullFrameEquivalent, iso, takenAt);
+    }
+
+    public ExifData withTakenAt(@Nullable Instant takenAt) {
+        return new ExifData(fnumber, focalLength, focalLengthFullFrameEquivalent, iso, takenAt);
+    }
+
+    public static ExifData empty() {
+        return new ExifData(null, null, null, null, null);
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Daniel Götten
+ * Copyright 2016 Daniel Götten
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library;
+package de.maci.photography.eyebeam.library.metadata;
 
-import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader;
-import de.maci.photography.eyebeam.library.metadata.MetadataReader;
+import de.maci.photography.eyebeam.library.Photo;
 
-import java.nio.file.Path;
+import javax.annotation.Nonnull;
 import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 08.10.15
+ * @since 20.02.16
  */
-public interface LibraryConfiguration {
+public interface MetadataAccessor {
 
-    Path rootFolder();
+    /**
+     * Checks if metadata for the given photo is present without loading the metadata information.
+     *
+     * @param photo The corresponding photo.
+     * @return <code>true</code>, if metadata for the given photo is present.
+     */
+    boolean metadataExists(@Nonnull Photo photo);
 
-    Optional<Predicate<Path>> fileFilter();
-
-    default Supplier<MetadataReader> metadataReader() {
-        return () -> new DefaultMetadataReader();
-    }
+    @Nonnull
+    Optional<Metadata> metadataOf(@Nonnull Photo photo);
 }

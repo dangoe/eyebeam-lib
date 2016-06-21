@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Daniel Götten
+ * Copyright 2016 Daniel Götten
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library;
+package de.maci.photography.eyebeam.library.storage.persistent;
 
-import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader;
-import de.maci.photography.eyebeam.library.metadata.MetadataReader;
-
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.io.IOException;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 08.10.15
+ * @since 16.02.16
  */
-public interface LibraryConfiguration {
+public interface Persistable {
 
-    Path rootFolder();
+    /**
+     * Flushes the data store, i.e. writing the data to disk.
+     *
+     * @throws IOException Thrown if the data store cannot be flushed.
+     */
+    void flush() throws IOException;
 
-    Optional<Predicate<Path>> fileFilter();
-
-    default Supplier<MetadataReader> metadataReader() {
-        return () -> new DefaultMetadataReader();
-    }
+    /**
+     * Restores the data store, i.e. reading the data from disk.
+     *
+     * @throws IOException Thrown if the data store cannot be restored.
+     */
+    void restore() throws IOException;
 }

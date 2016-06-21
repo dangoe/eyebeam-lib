@@ -1,31 +1,21 @@
 /**
- * Copyright (c) 2015 Daniel Götten
- * <p/>
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to
- * do so, subject to the following conditions:
- * <p/>
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * <p/>
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
- * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
- * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
- * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright 2015 Daniel Götten
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package de.maci.photography.eyebeam.library.indexing;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static java.nio.file.Files.walkFileTree;
-import static java.util.Collections.emptySet;
-import static java.util.Collections.singleton;
-import static java.util.Objects.requireNonNull;
-
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -37,13 +27,16 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import javax.annotation.Nonnull;
+import static java.nio.file.Files.walkFileTree;
+import static java.util.Collections.emptySet;
+import static java.util.Collections.singleton;
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 02.10.15
  */
-public final class FilesystemScanner {
+public class FilesystemScanner {
 
     public static final class Options {
 
@@ -53,7 +46,9 @@ public final class FilesystemScanner {
         protected final Set<FileVisitOption> fileVisitOptions;
 
         private Options(int maxDepth, Set<FileVisitOption> fileVisitOptions) {
-            checkArgument(maxDepth > 0, "Max depth must be a positive number.");
+            if (maxDepth <= 0) {
+                throw new IllegalArgumentException("Max depth must be a positive number.");
+            }
             this.maxDepth = maxDepth;
             this.fileVisitOptions = fileVisitOptions;
         }
