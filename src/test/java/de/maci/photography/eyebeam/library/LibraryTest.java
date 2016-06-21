@@ -268,6 +268,11 @@ public class LibraryTest {
     @SuppressWarnings("unchecked")
     public void aCustomMetadataReaderCanBeConfigured() throws Exception {
         Supplier<MetadataReader> metadataReaderFactory = mock(Supplier.class);
+        when(metadataReaderFactory.get()).thenAnswer(i -> {
+            MetadataReader metadataReader = mock(MetadataReader.class);
+            when(metadataReader.readFrom(any(Path.class))).thenAnswer(t -> mock(Metadata.class));
+            return metadataReader;
+        });
 
         Library sut = Library.newInstance(InMemoryDataStore.empty(), new LibraryConfiguration() {
             @Override
