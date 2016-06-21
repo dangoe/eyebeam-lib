@@ -1,4 +1,4 @@
-# eyebeam-lib (1.0.0-beta)
+# eyebeam-lib
 
 [![Build Status](https://travis-ci.org/dangoe/eyebeam-lib.svg?branch=develop)](https://travis-ci.org/dangoe/eyebeam-lib)
 
