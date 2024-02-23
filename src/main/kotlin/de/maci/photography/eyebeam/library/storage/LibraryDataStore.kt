@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library;
+package de.maci.photography.eyebeam.library.storage
 
-import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader;
-import de.maci.photography.eyebeam.library.metadata.MetadataReader;
-
-import java.nio.file.Path;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import de.maci.photography.eyebeam.library.Photo
+import de.maci.photography.eyebeam.library.metadata.Metadata
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 08.10.15
+ * @since 09.10.15
  */
-public interface LibraryConfiguration {
+interface LibraryDataStore {
 
-    Path rootFolder();
+    fun photos(): Sequence<Photo>
 
-    Optional<Predicate<Path>> fileFilter();
+    fun contains(photo: Photo): Boolean
 
-    default Supplier<MetadataReader> metadataReader() {
-        return () -> new DefaultMetadataReader();
-    }
+    fun size(): Long
+
+    fun remove(photo: Photo): Boolean
+
+    fun store(photo: Photo): Boolean
+
+    fun replaceMetadata(photo: Photo,  metadata: Metadata)
+
+    fun clear()
 }

@@ -21,7 +21,6 @@ import com.google.gson.reflect.TypeToken;
 import de.maci.photography.eyebeam.library.Photo;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
-import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.Charsets;

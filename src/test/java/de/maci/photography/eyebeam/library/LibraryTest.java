@@ -4,7 +4,6 @@ import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataReader;
 import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
-import de.maci.photography.eyebeam.library.storage.LibraryDataStore;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Rule;

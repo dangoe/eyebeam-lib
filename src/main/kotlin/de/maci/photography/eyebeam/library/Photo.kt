@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library.storage;
+package de.maci.photography.eyebeam.library
 
-import de.maci.photography.eyebeam.library.Photo;
-import de.maci.photography.eyebeam.library.metadata.Metadata;
-import de.maci.photography.eyebeam.library.metadata.MetadataAccessor;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.util.stream.Stream;
+import java.nio.file.Path
 
 /**
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 09.10.15
  */
-public interface LibraryDataStore extends MetadataAccessor {
+data class Photo(val path: Path) : Comparable<Photo> {
 
-    Stream<Photo> photos();
+    val fileName: String = path.fileName.toString()
 
-    boolean contains(@Nullable Photo photo);
-
-    long size();
-
-    boolean remove(@Nullable Photo photo);
-
-    boolean store(@Nonnull Photo photo);
-
-    void replaceMetadata(@Nonnull Photo photo, @Nonnull Metadata metadata);
-
-    void clear();
+    override fun compareTo(other: Photo): Int = path.compareTo(other.path)
 }
