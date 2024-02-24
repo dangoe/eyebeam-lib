@@ -1,8 +1,5 @@
 package de.maci.photography.eyebeam.library;
 
-import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
-import de.maci.photography.eyebeam.library.metadata.Metadata;
-import de.maci.photography.eyebeam.library.metadata.MetadataReader;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -234,7 +231,7 @@ public class LibraryTest {
         LibraryDataStore dataStore = InMemoryDataStore.empty();
 
         MetadataReader metadataReader = mock(MetadataReader.class);
-        when(metadataReader.readFrom(any(Path.class))).thenReturn(Metadata.empty());
+        when(metadataReader.read(any(Path.class))).thenReturn(Metadata.empty());
 
         Library sut = Library.newInstance(dataStore, new LibraryConfiguration() {
             @Override
@@ -255,9 +252,9 @@ public class LibraryTest {
 
         sut.createReindexer().reindexLibrary();
 
-        verify(metadataReader).readFrom(firstSampleFile);
-        verify(metadataReader).readFrom(secondSampleFile);
-        verify(metadataReader).readFrom(thirdSampleFile);
+        verify(metadataReader).read(firstSampleFile);
+        verify(metadataReader).read(secondSampleFile);
+        verify(metadataReader).read(thirdSampleFile);
 
         dataStore.photos().forEach(photo -> assertTrue(dataStore.metadataOf(photo).isPresent()));
     }
@@ -268,7 +265,7 @@ public class LibraryTest {
         Supplier<MetadataReader> metadataReaderFactory = mock(Supplier.class);
         when(metadataReaderFactory.get()).thenAnswer(i -> {
             MetadataReader metadataReader = mock(MetadataReader.class);
-            when(metadataReader.readFrom(any(Path.class))).thenAnswer(t -> mock(Metadata.class));
+            when(metadataReader.read(any(Path.class))).thenAnswer(t -> mock(Metadata.class));
             return metadataReader;
         });
 

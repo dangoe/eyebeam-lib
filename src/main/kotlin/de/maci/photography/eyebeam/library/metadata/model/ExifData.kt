@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Daniel Götten
+ * Copyright 2016 Daniel Götten
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library.storage.persistent;
+package de.maci.photography.eyebeam.library.metadata.model
 
-import javax.annotation.Nonnull;
+import java.time.Instant
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 07.11.15
- */
-public interface Storable<T> {
-
-    @Nonnull
-    T unbox();
-}
+data class ExifData(
+    val fNumber: Double?,
+    val focalLength: UInt?,
+    val focalLengthFullFrameEquivalent: UInt?,
+    val iso: UInt?,
+    val takenAt: Instant?
+)

@@ -19,21 +19,26 @@ import de.maci.photography.eyebeam.library.indexing.FilesystemScanner
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore
 import java.io.IOException
 import java.nio.file.Path
-import java.util.stream.Stream
 
-class LibraryReindexer(private val library: Library, private val libraryConfiguration: LibraryConfiguration) {
+class LibraryReindexer(
+    private val library: Library, private val libraryConfiguration: LibraryConfiguration
+) {
 
     companion object {
 
         private fun createScanner(fileFilter: (Path) -> Boolean): FilesystemScanner =
-                FilesystemScanner.newInstance(fileFilter, FilesystemScanner.Options.newInstance().followSymlinks(true))
+            FilesystemScanner(
+                FilesystemScanner.Options.default().withFollowSymlinks(true), fileFilter
+            )
 
-        private fun refreshIfMetadataOrExifIsMissing(dataStore: LibraryDataStore): (Photo) -> Boolean = { photo ->
-            dataStore.metadataOf(photo)?.exifData() == null
-        }
+        private fun refreshIfMetadataOrExifIsMissing(dataStore: LibraryDataStore): (Photo) -> Boolean =
+            { photo ->
+                dataStore.metadataOf(photo)?.exifData == null
+            }
     }
 
-    private val reindexingNecessaryDecision: (Path) -> Boolean = { path -> refreshIfMetadataOrExifIsMissing(library.dataStore).invoke((Photo(path))) }
+    private val reindexingNecessaryDecision: (Path) -> Boolean =
+        { path -> refreshIfMetadataOrExifIsMissing(library.dataStore).invoke((Photo(path))) }
 
     private fun rootFolder(): Path = this.libraryConfiguration.rootFolder()
 
@@ -56,20 +61,19 @@ class LibraryReindexer(private val library: Library, private val libraryConfigur
     private fun checkForNewPhotos() {
         val rootFolder = rootFolder()
 
-        createScanner(fileFilter())
-                .scan(rootFolder
-                ) { path -> library.dataStore.store(Photo(rootFolder.relativize(path))) }
+        createScanner(fileFilter()).scan(
+            rootFolder
+        ) { path -> library.dataStore.store(Photo(rootFolder.relativize(path))) }
     }
 
     private fun updateMetadata() {
         val rootFolder = rootFolder()
         val metadataReader = libraryConfiguration.metadataReader()
 
-        photosWithMetadataToBeRefreshed()
-                .forEach { photo ->
-                    val metadata = metadataReader.readFrom(rootFolder.resolve(photo.path))
-                    library.dataStore.updateMetadata(photo, metadata)
-                }
+        photosWithMetadataToBeRefreshed().forEach { photo ->
+            metadataReader.invoke().readMetadata(rootFolder.resolve(photo.path))
+                .onRight { library.dataStore.updateMetadata(photo, it) }
+        }
     }
 
     private fun photosWithMetadataToBeRefreshed(): Sequence<Photo> {

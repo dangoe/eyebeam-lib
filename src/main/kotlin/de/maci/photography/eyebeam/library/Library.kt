@@ -1,12 +1,10 @@
 package de.maci.photography.eyebeam.library
 
-import de.maci.photography.eyebeam.library.metadata.Metadata
+import de.maci.photography.eyebeam.library.metadata.model.Metadata
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore
-import java.util.*
 import java.util.concurrent.locks.ReentrantLock
-import java.util.stream.Stream
 
-class Library(val dataStore: LibraryDataStore, private val configuration: LibraryConfiguration) {
+class Library(val dataStore: LibraryDataStore) {
 
     private val reindexingLock = ReentrantLock()
 

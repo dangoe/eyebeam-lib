@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Daniel Götten
+ * Copyright 2016 Daniel Götten
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library.metadata;
+package de.maci.photography.eyebeam.library.storage.persistent
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 31.12.15
- */
-public class MetadataReadingException extends RuntimeException {
+import java.io.IOException
 
-    public MetadataReadingException(String message, Throwable cause) {
-        super(message, cause);
-    }
+interface Persistable {
+
+    /**
+     * Flushes the data store, i.e. writing the data to disk.
+     *
+     * @throws IOException Thrown if the data store cannot be flushed.
+     */
+    @Throws(IOException::class)
+    fun flush()
+
+    /**
+     * Restores the data store, i.e. reading the data from disk.
+     *
+     * @throws IOException Thrown if the data store cannot be restored.
+     */
+    @Throws(IOException::class)
+    fun restore()
 }

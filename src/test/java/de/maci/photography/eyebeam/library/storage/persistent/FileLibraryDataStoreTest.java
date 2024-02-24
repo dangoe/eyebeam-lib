@@ -1,8 +1,6 @@
 package de.maci.photography.eyebeam.library.storage.persistent;
 
 import de.maci.photography.eyebeam.library.Photo;
-import de.maci.photography.eyebeam.library.metadata.ExifData;
-import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.testhelper.matcher.MetadataMatcher;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +26,7 @@ import static org.junit.Assert.assertTrue;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 28.10.15
  */
-public class FileDataStoreTest {
+public class FileLibraryDataStoreTest {
 
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();

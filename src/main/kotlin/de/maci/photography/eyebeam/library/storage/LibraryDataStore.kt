@@ -17,7 +17,7 @@ package de.maci.photography.eyebeam.library.storage
 
 import arrow.core.Either
 import de.maci.photography.eyebeam.library.Photo
-import de.maci.photography.eyebeam.library.metadata.Metadata
+import de.maci.photography.eyebeam.library.metadata.model.Metadata
 import java.nio.file.Path
 
 interface LibraryDataStore {

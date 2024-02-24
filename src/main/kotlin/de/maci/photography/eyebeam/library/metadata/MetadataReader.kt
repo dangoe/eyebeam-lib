@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library.metadata;
+package de.maci.photography.eyebeam.library.metadata
 
-import de.maci.photography.eyebeam.library.Photo;
+import arrow.core.Either
+import de.maci.photography.eyebeam.library.metadata.model.Metadata
+import java.nio.file.Path
 
-import javax.annotation.Nonnull;
-import java.util.Optional;
-
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 20.02.16
- */
-public interface MetadataAccessor {
+interface MetadataReader {
 
     /**
-     * Checks if metadata for the given photo is present without loading the metadata information.
+     * Reads a photo's metadata for a specific path.
      *
-     * @param photo The corresponding photo.
-     * @return <code>true</code>, if metadata for the given photo is present.
+     * @param path The path to be read.
+     * @return The read metadata or an error message.
      */
-    boolean metadataExists(@Nonnull Photo photo);
-
-    @Nonnull
-    Optional<Metadata> metadataOf(@Nonnull Photo photo);
+    fun readMetadata(path: Path): Either<String, Metadata>
 }

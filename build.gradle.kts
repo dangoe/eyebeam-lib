@@ -14,19 +14,14 @@ repositories {
 }
 
 dependencies {
-    api(libs.com.google.code.findbugs.jsr305)
-    api(libs.com.drewnoakes.metadata.extractor)
-    api(libs.org.slf4j.slf4j.api)
-    api(libs.com.google.code.gson.gson)
-    api(libs.org.apache.commons.commons.compress)
-    api(libs.commons.io.commons.io)
-    api(libs.javax.xml.bind.jaxb.api)
+    implementation("javax.xml.bind:jaxb-api:2.3.1")
+    implementation("commons-io:commons-io:2.15.1")
+    implementation("org.apache.commons:commons-lang3:3.14.0")
+    implementation("org.apache.commons:commons-compress:1.26.0")
+    implementation("org.slf4j:slf4j-api:2.0.12")
+    implementation("com.drewnoakes:metadata-extractor:2.19.0")
+    implementation("com.google.code.gson:gson:2.9.1")
     implementation("io.arrow-kt:arrow-core:1.2.0")
-    testImplementation(libs.junit.junit)
-    testImplementation(libs.org.hamcrest.hamcrest.all)
-    testImplementation(libs.org.mockito.mockito.core)
-    testImplementation(libs.com.jayway.awaitility.awaitility)
-    testImplementation(libs.org.slf4j.slf4j.log4j12)
 }
 
 group = "de.maci.photography"

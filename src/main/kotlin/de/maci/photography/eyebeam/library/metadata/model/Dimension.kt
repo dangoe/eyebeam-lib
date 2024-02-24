@@ -13,27 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library.storage.persistent;
+package de.maci.photography.eyebeam.library.metadata.model
 
-import java.io.IOException;
-
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 16.02.16
- */
-public interface Persistable {
-
-    /**
-     * Flushes the data store, i.e. writing the data to disk.
-     *
-     * @throws IOException Thrown if the data store cannot be flushed.
-     */
-    void flush() throws IOException;
-
-    /**
-     * Restores the data store, i.e. reading the data from disk.
-     *
-     * @throws IOException Thrown if the data store cannot be restored.
-     */
-    void restore() throws IOException;
-}
+data class Dimension(val width: UInt, val height: UInt)

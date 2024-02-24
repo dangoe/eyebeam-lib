@@ -15,7 +15,6 @@
  */
 package de.maci.photography.eyebeam.library.testhelper.matcher;
 
-import de.maci.photography.eyebeam.library.metadata.ExifData;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
 

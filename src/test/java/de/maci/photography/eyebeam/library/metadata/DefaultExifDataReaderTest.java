@@ -1,5 +1,6 @@
 package de.maci.photography.eyebeam.library.metadata;
 
+import de.maci.photography.eyebeam.library.metadata.model.ExifData;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;

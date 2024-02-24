@@ -3,7 +3,7 @@ package de.maci.photography.eyebeam.library.storage
 import arrow.core.Either
 import arrow.core.right
 import de.maci.photography.eyebeam.library.Photo
-import de.maci.photography.eyebeam.library.metadata.Metadata
+import de.maci.photography.eyebeam.library.metadata.model.Metadata
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore.Errors.PhotoAlreadyExists
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore.Errors.PhotoDoesNotExist
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore.Errors.RemovePhotoError
@@ -11,16 +11,17 @@ import de.maci.photography.eyebeam.library.storage.LibraryDataStore.Errors.Store
 import de.maci.photography.eyebeam.library.storage.LibraryDataStore.Errors.StorePhotoError
 import java.util.*
 
-class InMemoryDataStore private constructor() : LibraryDataStore {
+class InMemoryLibraryDataStore private constructor() : LibraryDataStore {
 
     companion object {
 
-        fun empty(): InMemoryDataStore {
-            return InMemoryDataStore()
+        fun empty(): InMemoryLibraryDataStore {
+            return InMemoryLibraryDataStore()
         }
     }
 
-    private val photos: MutableMap<Photo, Metadata?> = TreeMap { obj: Photo, other: Photo -> obj.compareTo(other) }
+    private val photos: MutableMap<Photo, Metadata?> =
+        TreeMap { obj: Photo, other: Photo -> obj.compareTo(other) }
 
     override fun metadataOf(photo: Photo): Metadata? = photos[photo]
 
@@ -46,7 +47,9 @@ class InMemoryDataStore private constructor() : LibraryDataStore {
         return Unit.right()
     }
 
-    override fun updateMetadata(photo: Photo, metadata: Metadata): Either<StoreMetadataError, Unit> {
+    override fun updateMetadata(
+        photo: Photo, metadata: Metadata
+    ): Either<StoreMetadataError, Unit> {
         if (!contains(photo)) {
             return Either.Left(PhotoDoesNotExist(photo.path))
         }

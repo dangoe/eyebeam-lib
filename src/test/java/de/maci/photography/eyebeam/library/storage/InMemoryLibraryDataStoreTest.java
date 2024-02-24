@@ -1,7 +1,6 @@
 package de.maci.photography.eyebeam.library.storage;
 
 import de.maci.photography.eyebeam.library.Photo;
-import de.maci.photography.eyebeam.library.metadata.Metadata;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -21,14 +20,14 @@ import static org.junit.Assert.assertTrue;
  * @author Daniel Götten <daniel.goetten@googlemail.com>
  * @since 11.10.15
  */
-public class InMemoryDataStoreTest {
+public class InMemoryLibraryDataStoreTest {
 
     @Rule
     public final ExpectedException expectedException = ExpectedException.none();
 
     @Test
     public void containsNoData_IfNewInstance() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
 
         assertThat(sut.photos().collect(toSet()), emptyIterable());
         assertThat(sut.size(), equalTo(0L));
@@ -36,7 +35,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void aPhotoCanBeAdded_IfTheDataStoreIsEmpty() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         Photo photo = somePhoto();
 
         assertTrue(sut.store(photo));
@@ -46,7 +45,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void aPhotoIsNotAdded_IfAlreadyContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         Photo photo = somePhoto();
 
         sut.store(photo);
@@ -55,7 +54,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void metadataCannotBeSet_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
 
         String path = "/some/path.jpg";
 
@@ -67,7 +66,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void metadataCanBeSet_IfTheCorrespondingPhotoIsContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         Photo photo = somePhoto();
         sut.store(photo);
         Metadata metadata = Metadata.empty();
@@ -78,7 +77,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void metadataCannotBeRead_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
 
         String path = "/some/photo.jpg";
 
@@ -92,7 +91,7 @@ public class InMemoryDataStoreTest {
     public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
         Photo photo = somePhoto();
 
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         sut.store(photo);
 
         assertFalse(sut.metadataExists(photo));
@@ -103,7 +102,7 @@ public class InMemoryDataStoreTest {
         Photo photo = somePhoto();
         Metadata metadata = Metadata.empty();
 
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         sut.store(photo);
         sut.updateMetadata(photo, metadata);
 
@@ -112,7 +111,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void emptyDataStoreIsEmpty_IfCleared() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         sut.clear();
 
         assertThat(sut.size(), equalTo(0L));
@@ -120,7 +119,7 @@ public class InMemoryDataStoreTest {
 
     @Test
     public void nonEmptyDataStoreIsEmpty_IfCleared() throws Exception {
-        InMemoryDataStore sut = InMemoryDataStore.empty();
+        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
         sut.store(photoWithPath("/some/photo.jpg"));
         sut.store(photoWithPath("/some/other/photo.jpg"));
         sut.clear();

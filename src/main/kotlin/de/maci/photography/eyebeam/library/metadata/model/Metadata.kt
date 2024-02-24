@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Daniel Götten
+ * Copyright 2016 Daniel Götten
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library.storage.persistent;
+package de.maci.photography.eyebeam.library.metadata.model
 
-import javax.annotation.Nullable;
-import java.util.Optional;
+import java.awt.Dimension
+import java.time.Instant
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 07.11.15
- */
-public final class Storables {
-
-    private Storables() {
-        super();
-    }
-
-    public static <T> Optional<T> unboxNullSafe(@Nullable Storable<T> storable) {
-        if (storable == null) {
-            return Optional.empty();
-        }
-        return Optional.of(storable.unbox());
-    }
-}
+data class Metadata(
+    val fileSize: ULong, val imageSize: Dimension?, val exifData: ExifData?, val gatheredAt: Instant
+)

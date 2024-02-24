@@ -15,7 +15,6 @@
  */
 package de.maci.photography.eyebeam.library.testhelper;
 
-import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import org.mockito.invocation.InvocationOnMock;
 
 import javax.annotation.Nonnull;

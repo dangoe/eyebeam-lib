@@ -1,6 +1,5 @@
 package de.maci.photography.eyebeam.library.indexing;
 
-import de.maci.photography.eyebeam.library.indexing.FilesystemScanner.Options;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -111,7 +110,7 @@ public class FilesystemScannerTest {
 
         Consumer<Path> pathConsumer = mock(Consumer.class);
 
-        FilesystemScanner.newInstance(fileNameEndsWith(".jpg"), Options.newInstance().limitDepthTo(1))
+        FilesystemScanner.newInstance(fileNameEndsWith(".jpg"), Options.newInstance().withLimitDepthTo(1))
                          .scan(directoryToBeScanned, pathConsumer);
 
         verify(pathConsumer).accept(jpgFile);
@@ -123,7 +122,7 @@ public class FilesystemScannerTest {
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("Max depth must be larger than 0.");
 
-        Options.newInstance().limitDepthTo(0);
+        Options.newInstance().withLimitDepthTo(0);
     }
 
     @Test
@@ -131,7 +130,7 @@ public class FilesystemScannerTest {
         expectedException.expect(IllegalArgumentException.class);
         expectedException.expectMessage("Max depth must be larger than 0.");
 
-        Options.newInstance().limitDepthTo(-1);
+        Options.newInstance().withLimitDepthTo(-1);
     }
 
     private static Predicate<Path> fileNameEndsWith(String suffix) {

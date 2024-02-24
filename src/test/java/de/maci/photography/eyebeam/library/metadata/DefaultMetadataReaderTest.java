@@ -1,5 +1,7 @@
 package de.maci.photography.eyebeam.library.metadata;
 
+import de.maci.photography.eyebeam.library.metadata.model.ExifData;
+import de.maci.photography.eyebeam.library.metadata.model.Metadata;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -26,19 +28,19 @@ public class DefaultMetadataReaderTest {
     public void testReadExifData_ReturnsEmpty_IfFileDoesNotExist() throws Exception {
         expectedException.expect(MetadataReadingException.class);
 
-        sut.readFrom(Paths.get(getClass().getResource(".").toString(), UUID.randomUUID().toString()));
+        sut.read(Paths.get(getClass().getResource(".").toString(), UUID.randomUUID().toString()));
     }
 
     @Test
     public void testReadExifData_ReturnsEmpty_IfFileIsNotASupportedImage() throws Exception {
         expectedException.expect(MetadataReadingException.class);
 
-        sut.readFrom(Paths.get(getClass().getResource("test.txt").toURI()));
+        sut.read(Paths.get(getClass().getResource("test.txt").toURI()));
     }
 
     @Test
     public void testReadExifData_ReturnsValidMetadata_IfFileIsASupportedImage() throws Exception {
-        Metadata metadata = sut.readFrom(Paths.get(getClass().getResource("sample.jpg").toURI()));
+        Metadata metadata = sut.read(Paths.get(getClass().getResource("sample.jpg").toURI()));
         ExifData exifData = metadata.exifData().get();
 
         assertThat(metadata.fileSize().get(), equalTo(157933L));
