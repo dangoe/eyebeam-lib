@@ -17,10 +17,6 @@ package de.maci.photography.eyebeam.library
 
 import java.nio.file.Path
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 09.10.15
- */
 data class Photo(val path: Path) : Comparable<Photo> {
 
     val fileName: String = path.fileName.toString()

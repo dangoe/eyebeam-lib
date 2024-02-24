@@ -21,10 +21,6 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.stream.Stream
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 16.02.16
- */
 class LibraryReindexer(private val library: Library, private val libraryConfiguration: LibraryConfiguration) {
 
     companion object {
@@ -33,7 +29,7 @@ class LibraryReindexer(private val library: Library, private val libraryConfigur
                 FilesystemScanner.newInstance(fileFilter, FilesystemScanner.Options.newInstance().followSymlinks(true))
 
         private fun refreshIfMetadataOrExifIsMissing(dataStore: LibraryDataStore): (Photo) -> Boolean = { photo ->
-            !dataStore.metadataExists(photo) || !dataStore.metadataOf(photo).get().exifData().isPresent
+            dataStore.metadataOf(photo)?.exifData() == null
         }
     }
 
@@ -72,11 +68,11 @@ class LibraryReindexer(private val library: Library, private val libraryConfigur
         photosWithMetadataToBeRefreshed()
                 .forEach { photo ->
                     val metadata = metadataReader.readFrom(rootFolder.resolve(photo.path))
-                    library.dataStore.replaceMetadata(photo, metadata)
+                    library.dataStore.updateMetadata(photo, metadata)
                 }
     }
 
-    private fun photosWithMetadataToBeRefreshed(): Stream<Photo> {
+    private fun photosWithMetadataToBeRefreshed(): Sequence<Photo> {
         return library.photos().filter { photo -> reindexingNecessaryDecision.invoke(photo.path) }
     }
 }

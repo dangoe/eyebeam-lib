@@ -15,26 +15,73 @@
  */
 package de.maci.photography.eyebeam.library.storage
 
+import arrow.core.Either
 import de.maci.photography.eyebeam.library.Photo
 import de.maci.photography.eyebeam.library.metadata.Metadata
+import java.nio.file.Path
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 09.10.15
- */
 interface LibraryDataStore {
 
+    companion object Errors {
+
+        interface StorePhotoError
+        interface RemovePhotoError
+        interface StoreMetadataError
+
+        data class PhotoAlreadyExists(val path: Path) : StorePhotoError
+        data class PhotoDoesNotExist(val path: Path) : RemovePhotoError, StoreMetadataError
+    }
+
+    /**
+     * Returns the sequence of all photos contained in this data store.
+     * @return The sequence of all photos.
+     */
     fun photos(): Sequence<Photo>
 
+    /**
+     * Checks if the given photo is contained in this data store.
+     * @return `true`, if the photo is contained. `false` otherwise.
+     */
     fun contains(photo: Photo): Boolean
 
+    /**
+     * Checks if metadata exists for the given photo.
+     * @return `true`, if metadata exists. `false` otherwise.
+     */
+    fun metadataExists(photo: Photo): Boolean = metadataOf(photo) != null
+
+    /**
+     * Return the metadata assigned to the given photo.
+     * @return The assigned metadata, if stored.
+     */
+    fun metadataOf(photo: Photo): Metadata?
+
+    /**
+     * Calculates the size of this data store and returns the corresponding value.
+     * @return The total number of photos contained in this data store.
+     */
     fun size(): Long
 
-    fun remove(photo: Photo): Boolean
+    /**
+     * Stores the given photo, if it is not already contained in the store.
+     * @return An error or `Unit`, if the photo has been stored or not.
+     */
+    fun store(photo: Photo): Either<StorePhotoError, Unit>
 
-    fun store(photo: Photo): Boolean
+    /**
+     * Removes the given photo from the store. if it exists in the store.
+     * @return An error or `Unit`, if the photo exists in the store or not.
+     */
+    fun remove(photo: Photo): Either<RemovePhotoError, Unit>
 
-    fun replaceMetadata(photo: Photo,  metadata: Metadata)
+    /**
+     * Updates the metadata assigned to the given photo, if the photo exists in the store.
+     * @return An error or `Unit`, if the photo exists in the store or not.
+     */
+    fun updateMetadata(photo: Photo, metadata: Metadata): Either<StoreMetadataError, Unit>
 
+    /**
+     * Removes all photos and metadata from this store.
+     */
     fun clear()
 }

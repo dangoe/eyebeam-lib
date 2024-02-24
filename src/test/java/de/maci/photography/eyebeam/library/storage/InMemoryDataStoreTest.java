@@ -62,7 +62,7 @@ public class InMemoryDataStoreTest {
         expectedException.expect(NoSuchElementException.class);
         expectedException.expectMessage("Data store does not contain '" + path + "'.");
 
-        sut.replaceMetadata(photoWithPath(path), Metadata.empty());
+        sut.updateMetadata(photoWithPath(path), Metadata.empty());
     }
 
     @Test
@@ -71,7 +71,7 @@ public class InMemoryDataStoreTest {
         Photo photo = somePhoto();
         sut.store(photo);
         Metadata metadata = Metadata.empty();
-        sut.replaceMetadata(photo, metadata);
+        sut.updateMetadata(photo, metadata);
 
         assertThat(sut.metadataOf(photo).get(), equalTo(metadata));
     }
@@ -105,7 +105,7 @@ public class InMemoryDataStoreTest {
 
         InMemoryDataStore sut = InMemoryDataStore.empty();
         sut.store(photo);
-        sut.replaceMetadata(photo, metadata);
+        sut.updateMetadata(photo, metadata);
 
         assertTrue(sut.metadataExists(photo));
     }

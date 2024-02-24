@@ -20,7 +20,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.maci.photography.eyebeam.library.Photo;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
-import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.utils.Charsets;
@@ -105,8 +104,7 @@ public class FileDataStore implements LibraryDataStore, Persistable {
         return delegate.store(photo);
     }
 
-    @Override
-    public void replaceMetadata(@Nonnull Photo photo, @Nonnull Metadata metadata) {
+    public void updateMetadata(@Nonnull Photo photo, @Nonnull Metadata metadata) {
         delegate.replaceMetadata(photo, metadata);
     }
 
@@ -152,7 +150,7 @@ public class FileDataStore implements LibraryDataStore, Persistable {
 
             Optional<Metadata> metadata = Storables.unboxNullSafe(entry.getValue());
             if (metadata.isPresent()) {
-                replaceMetadata(photo, metadata.get());
+                updateMetadata(photo, metadata.get());
             }
         }
     }

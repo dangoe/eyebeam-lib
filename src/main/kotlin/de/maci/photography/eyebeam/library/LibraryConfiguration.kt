@@ -19,10 +19,6 @@ import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader
 import de.maci.photography.eyebeam.library.metadata.MetadataReader
 import java.nio.file.Path
 
-/**
- * @author Daniel Götten <daniel.goetten@googlemail.com>
- * @since 08.10.15
- */
 interface LibraryConfiguration {
 
     fun rootFolder(): Path

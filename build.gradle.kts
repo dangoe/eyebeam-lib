@@ -21,6 +21,7 @@ dependencies {
     api(libs.org.apache.commons.commons.compress)
     api(libs.commons.io.commons.io)
     api(libs.javax.xml.bind.jaxb.api)
+    implementation("io.arrow-kt:arrow-core:1.2.0")
     testImplementation(libs.junit.junit)
     testImplementation(libs.org.hamcrest.hamcrest.all)
     testImplementation(libs.org.mockito.mockito.core)

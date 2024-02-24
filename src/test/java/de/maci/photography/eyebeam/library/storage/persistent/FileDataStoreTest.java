@@ -72,7 +72,7 @@ public class FileDataStoreTest {
         expectedException.expect(NoSuchElementException.class);
         expectedException.expectMessage("Data store does not contain '" + path + "'.");
 
-        sut.replaceMetadata(photoWithPath(path), Metadata.empty());
+        sut.updateMetadata(photoWithPath(path), Metadata.empty());
     }
 
     @Test
@@ -81,7 +81,7 @@ public class FileDataStoreTest {
         Photo photo = somePhoto();
         sut.store(photo);
         Metadata metadata = Metadata.empty();
-        sut.replaceMetadata(photo, metadata);
+        sut.updateMetadata(photo, metadata);
 
         assertThat(sut.metadataOf(photo).get(), equalTo(metadata));
     }
@@ -132,7 +132,7 @@ public class FileDataStoreTest {
 
         FileDataStore sut = newFileDataStore();
         sut.store(photo);
-        sut.replaceMetadata(photo, metadata);
+        sut.updateMetadata(photo, metadata);
 
         assertTrue(sut.metadataExists(photo));
     }
@@ -147,7 +147,7 @@ public class FileDataStoreTest {
                                          null,
                                          ExifData.empty().withFnumber(1d).withFocalLength(2)
                                                  .withFocalLengthFullFrameEquivalent(3).withIso(4).withTakenAt(now));
-        sut.replaceMetadata(photoWithMetadata, metadata);
+        sut.updateMetadata(photoWithMetadata, metadata);
         Photo photoWithoutMetadata = photoWithPath("/some/other/photo.jpg");
         sut.store(photoWithoutMetadata);
         sut.flush();

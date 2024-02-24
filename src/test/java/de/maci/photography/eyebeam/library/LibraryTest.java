@@ -3,7 +3,6 @@ package de.maci.photography.eyebeam.library;
 import de.maci.photography.eyebeam.library.indexing.FilesystemScanner;
 import de.maci.photography.eyebeam.library.metadata.Metadata;
 import de.maci.photography.eyebeam.library.metadata.MetadataReader;
-import de.maci.photography.eyebeam.library.storage.InMemoryDataStore;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -169,7 +168,7 @@ public class LibraryTest {
 
         InMemoryDataStore dataStore = InMemoryDataStore.empty();
         dataStore.store(photo);
-        dataStore.replaceMetadata(photo, metadata);
+        dataStore.updateMetadata(photo, metadata);
 
         Library sut = Library.newInstance(dataStore, anyConfig());
 

@@ -10,7 +10,7 @@ class Library(val dataStore: LibraryDataStore, private val configuration: Librar
 
     private val reindexingLock = ReentrantLock()
 
-    fun photos(): Stream<Photo> {
+    fun photos(): Sequence<Photo> {
         return dataStore.photos()
     }
 
@@ -35,10 +35,10 @@ class Library(val dataStore: LibraryDataStore, private val configuration: Librar
     }
 
     fun metadataExists(photo: Photo): Boolean {
-        return dataStore.metadataExists(photo)
+        return dataStore.metadataOf(photo) != null
     }
 
-    fun metadataOf(photo: Photo): Optional<Metadata> {
+    fun metadataOf(photo: Photo): Metadata? {
         return dataStore.metadataOf(photo)
     }
 }
