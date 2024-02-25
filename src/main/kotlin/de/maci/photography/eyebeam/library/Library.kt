@@ -1,42 +1,41 @@
 package de.maci.photography.eyebeam.library
 
+import de.maci.photography.eyebeam.library.metadata.MetadataReader
 import de.maci.photography.eyebeam.library.metadata.model.Metadata
-import de.maci.photography.eyebeam.library.storage.LibraryDataStore
-import java.util.concurrent.locks.ReentrantLock
+import de.maci.photography.eyebeam.library.model.PhotoLocation
+import de.maci.photography.eyebeam.library.storage.LibraryIndexDataStore
 
-class Library(val dataStore: LibraryDataStore) {
+class Library(
+    private val metadataReader: MetadataReader,
+    private val indexDataStore: LibraryIndexDataStore,
+    private val configuration: LibraryConfiguration
+) {
 
-    private val reindexingLock = ReentrantLock()
+    /**
+     * Returns the sequence of all photos contained in this library.
+     * @return The sequence of all photos.
+     */
+    fun photos(): Sequence<PhotoLocation> = indexDataStore.photos()
 
-    fun photos(): Sequence<Photo> {
-        return dataStore.photos()
-    }
+    /**
+     * Calculates and returns the total count of photos contained in this library.
+     * @return The total count of photos contained in this library.
+     */
+    fun size(): Long = indexDataStore.size()
 
-    fun countPhotos(): Long {
-        return dataStore.size()
-    }
+    fun metadataOf(photoLocation: PhotoLocation): Metadata? =
+        indexDataStore.metadataOf(photoLocation)
 
-    internal fun lockForReindexing(): Boolean {
-        return reindexingLock.tryLock()
-    }
+    fun reindex() {
 
-    internal fun unlock() {
-        reindexingLock.unlock()
-    }
+        val indexRebuildingConfiguration = LibraryIndexer.IndexRebuildingConfiguration(
+            configuration.rootFolder,
+            configuration.fileFilter
+        )
 
-    fun isReindexing(): Boolean {
-        return reindexingLock.isLocked
-    }
-
-    fun clear() {
-        dataStore.clear()
-    }
-
-    fun metadataExists(photo: Photo): Boolean {
-        return dataStore.metadataOf(photo) != null
-    }
-
-    fun metadataOf(photo: Photo): Metadata? {
-        return dataStore.metadataOf(photo)
+        LibraryIndexer(metadataReader).rebuildIndex(
+            indexDataStore,
+            indexRebuildingConfiguration
+        )
     }
 }

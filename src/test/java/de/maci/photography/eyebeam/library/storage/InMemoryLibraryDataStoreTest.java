@@ -1,6 +1,6 @@
 package de.maci.photography.eyebeam.library.storage;
 
-import de.maci.photography.eyebeam.library.Photo;
+import de.maci.photography.eyebeam.library.model.PhotoLocation;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -27,7 +27,7 @@ public class InMemoryLibraryDataStoreTest {
 
     @Test
     public void containsNoData_IfNewInstance() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
 
         assertThat(sut.photos().collect(toSet()), emptyIterable());
         assertThat(sut.size(), equalTo(0L));
@@ -35,49 +35,49 @@ public class InMemoryLibraryDataStoreTest {
 
     @Test
     public void aPhotoCanBeAdded_IfTheDataStoreIsEmpty() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
-        Photo photo = somePhoto();
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
+        PhotoLocation photoLocation = somePhoto();
 
-        assertTrue(sut.store(photo));
-        assertTrue(sut.contains(photo));
-        assertThat(sut.photos().collect(toSet()), equalTo(singleton(photo)));
+        assertTrue(sut.add(photoLocation));
+        assertTrue(sut.contains(photoLocation));
+        assertThat(sut.photos().collect(toSet()), equalTo(singleton(photoLocation)));
     }
 
     @Test
     public void aPhotoIsNotAdded_IfAlreadyContainedInTheDataStore() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
-        Photo photo = somePhoto();
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
+        PhotoLocation photoLocation = somePhoto();
 
-        sut.store(photo);
-        assertFalse(sut.store(photo));
+        sut.add(photoLocation);
+        assertFalse(sut.add(photoLocation));
     }
 
     @Test
     public void metadataCannotBeSet_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
 
         String path = "/some/path.jpg";
 
         expectedException.expect(NoSuchElementException.class);
         expectedException.expectMessage("Data store does not contain '" + path + "'.");
 
-        sut.updateMetadata(photoWithPath(path), Metadata.empty());
+        sut.storeMetadata(photoWithPath(path), Metadata.empty());
     }
 
     @Test
     public void metadataCanBeSet_IfTheCorrespondingPhotoIsContainedInTheDataStore() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
-        Photo photo = somePhoto();
-        sut.store(photo);
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
+        PhotoLocation photoLocation = somePhoto();
+        sut.add(photoLocation);
         Metadata metadata = Metadata.empty();
-        sut.updateMetadata(photo, metadata);
+        sut.storeMetadata(photoLocation, metadata);
 
-        assertThat(sut.metadataOf(photo).get(), equalTo(metadata));
+        assertThat(sut.metadataOf(photoLocation).get(), equalTo(metadata));
     }
 
     @Test
     public void metadataCannotBeRead_IfTheCorrespondingPhotoIsNotContainedInTheDataStore() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
 
         String path = "/some/photo.jpg";
 
@@ -89,29 +89,29 @@ public class InMemoryLibraryDataStoreTest {
 
     @Test
     public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
-        Photo photo = somePhoto();
+        PhotoLocation photoLocation = somePhoto();
 
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
-        sut.store(photo);
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
+        sut.add(photoLocation);
 
-        assertFalse(sut.metadataExists(photo));
+        assertFalse(sut.metadataExists(photoLocation));
     }
 
     @Test
     public void metadataExistsEvaluatesToTrue_IfMetadataIsPresent() throws Exception {
-        Photo photo = somePhoto();
+        PhotoLocation photoLocation = somePhoto();
         Metadata metadata = Metadata.empty();
 
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
-        sut.store(photo);
-        sut.updateMetadata(photo, metadata);
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
+        sut.add(photoLocation);
+        sut.storeMetadata(photoLocation, metadata);
 
-        assertTrue(sut.metadataExists(photo));
+        assertTrue(sut.metadataExists(photoLocation));
     }
 
     @Test
     public void emptyDataStoreIsEmpty_IfCleared() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
         sut.clear();
 
         assertThat(sut.size(), equalTo(0L));
@@ -119,19 +119,19 @@ public class InMemoryLibraryDataStoreTest {
 
     @Test
     public void nonEmptyDataStoreIsEmpty_IfCleared() throws Exception {
-        InMemoryLibraryDataStore sut = InMemoryLibraryDataStore.empty();
-        sut.store(photoWithPath("/some/photo.jpg"));
-        sut.store(photoWithPath("/some/other/photo.jpg"));
+        InMemoryLibraryIndexDataStore sut = InMemoryLibraryIndexDataStore.empty();
+        sut.add(photoWithPath("/some/photo.jpg"));
+        sut.add(photoWithPath("/some/other/photo.jpg"));
         sut.clear();
 
         assertThat(sut.size(), equalTo(0L));
     }
 
-    private static Photo somePhoto() {
-        return Photo.locatedAt(new File("").toPath());
+    private static PhotoLocation somePhoto() {
+        return PhotoLocation.locatedAt(new File("").toPath());
     }
 
-    private static Photo photoWithPath(String path) {
-        return Photo.locatedAt(new File(path).toPath());
+    private static PhotoLocation photoWithPath(String path) {
+        return PhotoLocation.locatedAt(new File(path).toPath());
     }
 }

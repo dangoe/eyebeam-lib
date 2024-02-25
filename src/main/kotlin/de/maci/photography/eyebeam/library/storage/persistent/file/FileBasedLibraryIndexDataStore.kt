@@ -4,10 +4,10 @@ import arrow.core.Either
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import de.maci.photography.eyebeam.library.Photo
+import de.maci.photography.eyebeam.library.model.PhotoLocation
 import de.maci.photography.eyebeam.library.metadata.model.Metadata
-import de.maci.photography.eyebeam.library.storage.InMemoryLibraryDataStore
-import de.maci.photography.eyebeam.library.storage.LibraryDataStore
+import de.maci.photography.eyebeam.library.storage.InMemoryLibraryIndexDataStore
+import de.maci.photography.eyebeam.library.storage.LibraryIndexDataStore
 import de.maci.photography.eyebeam.library.storage.persistent.Persistable
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
@@ -22,7 +22,8 @@ import de.maci.photography.eyebeam.library.storage.persistent.file.model.Metadat
 import de.maci.photography.eyebeam.library.storage.persistent.file.model.Photo as FileModelPhoto
 
 
-class FileLibraryDataStore(private val dbFile: Path) : LibraryDataStore, Persistable {
+class FileBasedLibraryIndexDataStore(private val dbFile: Path) : LibraryIndexDataStore,
+    Persistable {
 
     companion object {
 
@@ -32,26 +33,26 @@ class FileLibraryDataStore(private val dbFile: Path) : LibraryDataStore, Persist
 
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val delegate: LibraryDataStore = InMemoryLibraryDataStore.empty()
+    private val delegate: LibraryIndexDataStore = InMemoryLibraryIndexDataStore.empty()
 
-    override fun metadataOf(photo: Photo): Metadata? = delegate.metadataOf(photo)
+    override fun metadataOf(photoLocation: PhotoLocation): Metadata? = delegate.metadataOf(photoLocation)
 
-    override fun photos(): Sequence<Photo> = delegate.photos()
+    override fun photos(): Sequence<PhotoLocation> = delegate.photos()
 
-    override fun contains(photo: Photo): Boolean = delegate.contains(photo)
+    override fun contains(photoLocation: PhotoLocation): Boolean = delegate.contains(photoLocation)
 
     override fun size(): Long = delegate.size()
 
-    override fun remove(photo: Photo): Either<LibraryDataStore.Errors.RemovePhotoError, Unit> =
-        delegate.remove(photo)
+    override fun remove(photoLocation: PhotoLocation): Either<LibraryIndexDataStore.Errors.RemovePhotoError, Unit> =
+        delegate.remove(photoLocation)
 
-    override fun store(photo: Photo): Either<LibraryDataStore.Errors.StorePhotoError, Unit> =
-        delegate.store(photo)
+    override fun add(photoLocation: PhotoLocation): Either<LibraryIndexDataStore.Errors.StorePhotoError, Unit> =
+        delegate.add(photoLocation)
 
-    override fun updateMetadata(
-        photo: Photo, metadata: Metadata
-    ): Either<LibraryDataStore.Errors.StoreMetadataError, Unit> =
-        delegate.updateMetadata(photo, metadata)
+    override fun storeMetadata(
+        photoLocation: PhotoLocation, metadata: Metadata
+    ): Either<LibraryIndexDataStore.Errors.StoreMetadataError, Unit> =
+        delegate.storeMetadata(photoLocation, metadata)
 
     override fun clear() = delegate.clear()
 
@@ -70,13 +71,14 @@ class FileLibraryDataStore(private val dbFile: Path) : LibraryDataStore, Persist
     }
 
     @Throws(JAXBException::class)
-    private fun mapToFileModel(): Map<FileModelPhoto, FileModelMetadata?> =
-        photos().fold(HashMap()) { a, b ->
+    private fun mapToFileModel(): Map<FileModelPhoto, FileModelMetadata?> {
+        return photos().fold(mutableMapOf()) { a, b ->
             val metadata = delegate.metadataOf(b)
             a[FileModelPhoto(b.path.toString())] =
                 if (metadata != null) FileModelMetadata(metadata) else null
-            return a
+            return@fold a
         }
+    }
 
     @Throws(IOException::class)
     override fun restore() {
@@ -95,12 +97,12 @@ class FileLibraryDataStore(private val dbFile: Path) : LibraryDataStore, Persist
         clear()
 
         for ((key, value) in data) {
-            val photo = Photo(File(key.path).toPath())
+            val photoLocation = PhotoLocation(File(key.path).toPath())
 
-            store(photo)
+            add(photoLocation)
 
             if (value != null) {
-                updateMetadata(photo, value.toModel())
+                storeMetadata(photoLocation, value.toModel())
             }
         }
     }

@@ -1,6 +1,6 @@
 package de.maci.photography.eyebeam.library.storage.persistent;
 
-import de.maci.photography.eyebeam.library.Photo;
+import de.maci.photography.eyebeam.library.model.PhotoLocation;
 import de.maci.photography.eyebeam.library.testhelper.matcher.MetadataMatcher;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,20 +45,20 @@ public class FileLibraryDataStoreTest {
     @Test
     public void aPhotoCanBeAdded_IfTheDataStoreIsEmpty() throws Exception {
         FileDataStore sut = newFileDataStore();
-        Photo photo = somePhoto();
+        PhotoLocation photoLocation = somePhoto();
 
-        assertTrue(sut.store(photo));
-        assertTrue(sut.contains(photo));
-        assertThat(sut.photos().collect(toSet()), equalTo(singleton(photo)));
+        assertTrue(sut.store(photoLocation));
+        assertTrue(sut.contains(photoLocation));
+        assertThat(sut.photos().collect(toSet()), equalTo(singleton(photoLocation)));
     }
 
     @Test
     public void aPhotoIsNotAdded_IfAlreadyContainedInTheDataStore() throws Exception {
         FileDataStore sut = newFileDataStore();
-        Photo photo = somePhoto();
-        sut.store(photo);
+        PhotoLocation photoLocation = somePhoto();
+        sut.store(photoLocation);
 
-        assertFalse(sut.store(photo));
+        assertFalse(sut.store(photoLocation));
     }
 
     @Test
@@ -76,12 +76,12 @@ public class FileLibraryDataStoreTest {
     @Test
     public void metadataCanBeSet_IfTheCorrespondingPhotoIsContainedInTheDataStore() throws Exception {
         FileDataStore sut = newFileDataStore();
-        Photo photo = somePhoto();
-        sut.store(photo);
+        PhotoLocation photoLocation = somePhoto();
+        sut.store(photoLocation);
         Metadata metadata = Metadata.empty();
-        sut.updateMetadata(photo, metadata);
+        sut.updateMetadata(photoLocation, metadata);
 
-        assertThat(sut.metadataOf(photo).get(), equalTo(metadata));
+        assertThat(sut.metadataOf(photoLocation).get(), equalTo(metadata));
     }
 
     @Test
@@ -115,46 +115,47 @@ public class FileLibraryDataStoreTest {
 
     @Test
     public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
-        Photo photo = somePhoto();
+        PhotoLocation photoLocation = somePhoto();
 
         FileDataStore sut = newFileDataStore();
-        sut.store(photo);
+        sut.store(photoLocation);
 
-        assertFalse(sut.metadataExists(photo));
+        assertFalse(sut.metadataExists(photoLocation));
     }
 
     @Test
     public void metadataExistsEvaluatesToTrue_IfMetadataIsPresent() throws Exception {
-        Photo photo = somePhoto();
+        PhotoLocation photoLocation = somePhoto();
         Metadata metadata = Metadata.empty();
 
         FileDataStore sut = newFileDataStore();
-        sut.store(photo);
-        sut.updateMetadata(photo, metadata);
+        sut.store(photoLocation);
+        sut.updateMetadata(photoLocation, metadata);
 
-        assertTrue(sut.metadataExists(photo));
+        assertTrue(sut.metadataExists(photoLocation));
     }
 
     @Test
     public void aDataStoreCanBeFlushedAndRestored() throws Exception {
         FileDataStore sut = newFileDataStore();
-        Photo photoWithMetadata = photoWithPath("/some/photo.jpg");
-        sut.store(photoWithMetadata);
+        PhotoLocation photoLocationWithMetadata = photoWithPath("/some/photo.jpg");
+        sut.store(photoLocationWithMetadata);
         Instant now = Instant.now();
         Metadata metadata = new Metadata(42L,
                                          null,
                                          ExifData.empty().withFnumber(1d).withFocalLength(2)
                                                  .withFocalLengthFullFrameEquivalent(3).withIso(4).withTakenAt(now));
-        sut.updateMetadata(photoWithMetadata, metadata);
-        Photo photoWithoutMetadata = photoWithPath("/some/other/photo.jpg");
-        sut.store(photoWithoutMetadata);
+        sut.updateMetadata(photoLocationWithMetadata, metadata);
+        PhotoLocation photoLocationWithoutMetadata = photoWithPath("/some/other/photo.jpg");
+        sut.store(photoLocationWithoutMetadata);
         sut.flush();
         sut.clear();
         sut.restore();
 
-        assertThat(sut.photos().collect(toSet()), containsInAnyOrder(photoWithMetadata, photoWithoutMetadata));
-        assertThat(sut.metadataOf(photoWithMetadata).get(), new MetadataMatcher(metadata));
-        assertFalse(sut.metadataExists(photoWithoutMetadata));
+        assertThat(sut.photos().collect(toSet()), containsInAnyOrder(photoLocationWithMetadata,
+            photoLocationWithoutMetadata));
+        assertThat(sut.metadataOf(photoLocationWithMetadata).get(), new MetadataMatcher(metadata));
+        assertFalse(sut.metadataExists(photoLocationWithoutMetadata));
     }
 
     @Test
@@ -175,12 +176,12 @@ public class FileLibraryDataStoreTest {
         assertFalse(sut.metadataOf(photoWithPath("/some/other/photo.jpg")).isPresent());
     }
 
-    private static Photo somePhoto() {
-        return Photo.locatedAt(new File("").toPath());
+    private static PhotoLocation somePhoto() {
+        return PhotoLocation.locatedAt(new File("").toPath());
     }
 
-    private static Photo photoWithPath(String path) {
-        return Photo.locatedAt(new File(path).toPath());
+    private static PhotoLocation photoWithPath(String path) {
+        return PhotoLocation.locatedAt(new File(path).toPath());
     }
 
     private FileDataStore newFileDataStore() {

@@ -15,17 +15,6 @@
  */
 package de.maci.photography.eyebeam.library
 
-import de.maci.photography.eyebeam.library.metadata.DefaultMetadataReader
-import de.maci.photography.eyebeam.library.metadata.MetadataReader
 import java.nio.file.Path
 
-interface LibraryConfiguration {
-
-    fun rootFolder(): Path
-
-    fun fileFilter(): (Path) -> Boolean
-
-    fun metadataReader(): () -> MetadataReader {
-        return { DefaultMetadataReader() }
-    }
-}
+data class LibraryConfiguration(val rootFolder: Path, val fileFilter: (Path) -> Boolean)

@@ -1,5 +1,6 @@
 package de.maci.photography.eyebeam.library;
 
+import de.maci.photography.eyebeam.library.model.PhotoLocation;
 import org.junit.Test;
 
 import java.nio.file.Paths;
@@ -15,8 +16,8 @@ public class PhotoTest {
 
     @Test
     public void filenameIsExtractedCorrectly() throws Exception {
-        Photo photo = Photo.locatedAt(Paths.get(getClass().getResource("sample.jpg").toURI()));
+        PhotoLocation photoLocation = PhotoLocation.locatedAt(Paths.get(getClass().getResource("sample.jpg").toURI()));
 
-        assertThat(photo.filename(), equalTo("sample.jpg"));
+        assertThat(photoLocation.filename(), equalTo("sample.jpg"));
     }
 }

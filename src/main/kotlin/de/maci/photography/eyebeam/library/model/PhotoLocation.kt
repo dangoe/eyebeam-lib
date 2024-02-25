@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.maci.photography.eyebeam.library
+package de.maci.photography.eyebeam.library.model
 
 import java.nio.file.Path
 
-data class Photo(val path: Path) : Comparable<Photo> {
+data class PhotoLocation(val path: Path) : Comparable<PhotoLocation> {
 
     val fileName: String = path.fileName.toString()
 
-    override fun compareTo(other: Photo): Int = path.compareTo(other.path)
+    override fun compareTo(other: PhotoLocation): Int = path.compareTo(other.path)
 }

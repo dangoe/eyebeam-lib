@@ -1,5 +1,6 @@
 package de.maci.photography.eyebeam.library;
 
+import de.maci.photography.eyebeam.library.model.PhotoLocation;
 import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -79,26 +80,26 @@ public class LibraryTest {
         LibraryDataStore dataStore = dataStoreContainingThreePhotos();
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        List<Photo> expectedPhotos = dataStore.photos().collect(toList());
+        List<PhotoLocation> expectedPhotoLocations = dataStore.photos().collect(toList());
 
         MatcherAssert.assertThat(sut.photos().collect(toList()),
-                                 containsInAnyOrder(expectedPhotos.get(0),
-                                                    expectedPhotos.get(1),
-                                                    expectedPhotos.get(2)));
+                                 containsInAnyOrder(expectedPhotoLocations.get(0),
+                                                    expectedPhotoLocations.get(1),
+                                                    expectedPhotoLocations.get(2)));
     }
 
     @Test
     public void countPhotosReturnsZero_IfCorrespondingDataStoreIsEmpty() throws Exception {
         Library sut = Library.newInstance(InMemoryDataStore.empty(), anyConfig());
 
-        MatcherAssert.assertThat(sut.countPhotos(), equalTo(0L));
+        MatcherAssert.assertThat(sut.size(), equalTo(0L));
     }
 
     @Test
     public void countPhotosReturnsNumberOfPhotosContainedInTheDatastore_IfCorrespondingDataStoreIsNotEmpty() throws Exception {
         Library sut = Library.newInstance(dataStoreContainingThreePhotos(), anyConfig());
 
-        MatcherAssert.assertThat(sut.countPhotos(), equalTo(3L));
+        MatcherAssert.assertThat(sut.size(), equalTo(3L));
     }
 
     @Test
@@ -106,7 +107,7 @@ public class LibraryTest {
         Library sut = Library.newInstance(dataStoreContainingThreePhotos(), anyConfig());
         sut.clear();
 
-        MatcherAssert.assertThat(sut.countPhotos(), equalTo(0L));
+        MatcherAssert.assertThat(sut.size(), equalTo(0L));
     }
 
     @Test
@@ -115,61 +116,61 @@ public class LibraryTest {
         expectedException.expectMessage("Data store does not contain 'aSecondPhoto.jpg'.");
 
         LibraryDataStore dataStore = InMemoryDataStore.empty();
-        dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
+        dataStore.store(PhotoLocation.locatedAt(Paths.get("somePhoto.jpg")));
 
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        sut.metadataOf(Photo.locatedAt(Paths.get("aSecondPhoto.jpg")));
+        sut.metadataOf(PhotoLocation.locatedAt(Paths.get("aSecondPhoto.jpg")));
     }
 
     @Test
     public void metadataIsAbsent_IfTheDataStoreContainsTheCorrespondingPhotoButNoMetadataInformationIsAvailable() throws Exception {
         LibraryDataStore dataStore = InMemoryDataStore.empty();
-        dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
+        dataStore.store(PhotoLocation.locatedAt(Paths.get("somePhoto.jpg")));
 
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        assertFalse(sut.metadataOf(Photo.locatedAt(Paths.get("somePhoto.jpg"))).isPresent());
+        assertFalse(sut.metadataOf(PhotoLocation.locatedAt(Paths.get("somePhoto.jpg"))).isPresent());
     }
 
     @Test
     public void metadataIsReturned_IfTheDataStoreContainsTheCorrespondingPhotoButNoMetadataInformationIsAvailable() throws Exception {
-        Photo photo = Photo.locatedAt(Paths.get("somePhoto.jpg"));
+        PhotoLocation photoLocation = PhotoLocation.locatedAt(Paths.get("somePhoto.jpg"));
         Metadata metadata = Metadata.empty();
 
         LibraryDataStore dataStore = InMemoryDataStore.empty();
-        dataStore.store(photo);
-        dataStore.replaceMetadata(photo, metadata);
+        dataStore.store(photoLocation);
+        dataStore.replaceMetadata(photoLocation, metadata);
 
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        MatcherAssert.assertThat(sut.metadataOf(photo).get(), is(metadata));
+        MatcherAssert.assertThat(sut.metadataOf(photoLocation).get(), is(metadata));
     }
 
     @Test
     public void metadataExistsEvaluatesToFalse_IfMetadataIsNotPresent() throws Exception {
-        Photo photo = Photo.locatedAt(Paths.get("somePhoto.jpg"));
+        PhotoLocation photoLocation = PhotoLocation.locatedAt(Paths.get("somePhoto.jpg"));
 
         InMemoryDataStore dataStore = InMemoryDataStore.empty();
-        dataStore.store(photo);
+        dataStore.store(photoLocation);
 
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        assertFalse(sut.metadataExists(photo));
+        assertFalse(sut.metadataExists(photoLocation));
     }
 
     @Test
     public void metadataExistsEvaluatesToTrue_IfMetadataIsPresent() throws Exception {
-        Photo photo = Photo.locatedAt(Paths.get("somePhoto.jpg"));
+        PhotoLocation photoLocation = PhotoLocation.locatedAt(Paths.get("somePhoto.jpg"));
         Metadata metadata = Metadata.empty();
 
         InMemoryDataStore dataStore = InMemoryDataStore.empty();
-        dataStore.store(photo);
-        dataStore.updateMetadata(photo, metadata);
+        dataStore.store(photoLocation);
+        dataStore.updateMetadata(photoLocation, metadata);
 
         Library sut = Library.newInstance(dataStore, anyConfig());
 
-        assertTrue(sut.metadataExists(photo));
+        assertTrue(sut.metadataExists(photoLocation));
     }
 
     @Test
@@ -179,7 +180,7 @@ public class LibraryTest {
 
         Library sut = Library.newInstance(dataStore, configuration);
 
-        LibraryReindexer reindexer = new LibraryReindexer(sut, configuration, photo -> true) {
+        LibraryIndexer reindexer = new LibraryIndexer(sut, configuration, photo -> true) {
 
             @Override
             protected FilesystemScanner createScanner(Predicate<Path> fileFilter) {
@@ -188,7 +189,7 @@ public class LibraryTest {
             }
         };
 
-        new Thread(() -> reindexer.reindexLibrary()).start();
+        new Thread(() -> reindexer.rebuildIndex()).start();
 
         await().atMost(250, MILLISECONDS).until(() -> sut.isReindexing());
         await().atMost(1, SECONDS).until(() -> !sut.isReindexing());
@@ -205,7 +206,7 @@ public class LibraryTest {
     @SuppressWarnings("unchecked")
     public void photosAreAddedWithRelativizedPathToTheDataStore_WhileReindexing() throws Exception {
         LibraryDataStore dataStore = mock(LibraryDataStore.class);
-        when(dataStore.photos()).thenReturn(Collections.<Photo>emptySet().stream());
+        when(dataStore.photos()).thenReturn(Collections.<PhotoLocation>emptySet().stream());
 
         Library sut = Library.newInstance(dataStore, new LibraryConfiguration() {
             @Override
@@ -221,9 +222,9 @@ public class LibraryTest {
 
         sut.createReindexer().reindexLibrary();
 
-        verify(dataStore).store(Photo.locatedAt(temporaryFolderPath.relativize(firstSampleFile)));
-        verify(dataStore).store(Photo.locatedAt(temporaryFolderPath.relativize(secondSampleFile)));
-        verify(dataStore).store(Photo.locatedAt(temporaryFolderPath.relativize(thirdSampleFile)));
+        verify(dataStore).store(PhotoLocation.locatedAt(temporaryFolderPath.relativize(firstSampleFile)));
+        verify(dataStore).store(PhotoLocation.locatedAt(temporaryFolderPath.relativize(secondSampleFile)));
+        verify(dataStore).store(PhotoLocation.locatedAt(temporaryFolderPath.relativize(thirdSampleFile)));
     }
 
     @Test
@@ -379,14 +380,14 @@ public class LibraryTest {
 
     private static LibraryDataStore dataStoreContainingThreePhotos() {
         LibraryDataStore dataStore = InMemoryDataStore.empty();
-        dataStore.store(Photo.locatedAt(Paths.get("somePhoto.jpg")));
-        dataStore.store(Photo.locatedAt(Paths.get("aSecondPhoto.jpg")));
-        dataStore.store(Photo.locatedAt(Paths.get("aThirdPhoto.jpg")));
+        dataStore.store(PhotoLocation.locatedAt(Paths.get("somePhoto.jpg")));
+        dataStore.store(PhotoLocation.locatedAt(Paths.get("aSecondPhoto.jpg")));
+        dataStore.store(PhotoLocation.locatedAt(Paths.get("aThirdPhoto.jpg")));
         return dataStore;
     }
 
-    private static Photo photo(Path path) {
-        return Photo.locatedAt(path.getFileName());
+    private static PhotoLocation photo(Path path) {
+        return PhotoLocation.locatedAt(path.getFileName());
     }
 
     private static LibraryConfiguration anyConfig() {

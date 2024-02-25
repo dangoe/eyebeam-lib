@@ -16,11 +16,11 @@
 package de.maci.photography.eyebeam.library.storage
 
 import arrow.core.Either
-import de.maci.photography.eyebeam.library.Photo
+import de.maci.photography.eyebeam.library.model.PhotoLocation
 import de.maci.photography.eyebeam.library.metadata.model.Metadata
 import java.nio.file.Path
 
-interface LibraryDataStore {
+interface LibraryIndexDataStore {
 
     companion object Errors {
 
@@ -36,25 +36,25 @@ interface LibraryDataStore {
      * Returns the sequence of all photos contained in this data store.
      * @return The sequence of all photos.
      */
-    fun photos(): Sequence<Photo>
+    fun photos(): Sequence<PhotoLocation>
 
     /**
      * Checks if the given photo is contained in this data store.
      * @return `true`, if the photo is contained. `false` otherwise.
      */
-    fun contains(photo: Photo): Boolean
+    fun contains(photoLocation: PhotoLocation): Boolean
 
     /**
      * Checks if metadata exists for the given photo.
      * @return `true`, if metadata exists. `false` otherwise.
      */
-    fun metadataExists(photo: Photo): Boolean = metadataOf(photo) != null
+    fun metadataExists(photoLocation: PhotoLocation): Boolean = metadataOf(photoLocation) != null
 
     /**
      * Return the metadata assigned to the given photo.
      * @return The assigned metadata, if stored.
      */
-    fun metadataOf(photo: Photo): Metadata?
+    fun metadataOf(photoLocation: PhotoLocation): Metadata?
 
     /**
      * Calculates the size of this data store and returns the corresponding value.
@@ -63,22 +63,22 @@ interface LibraryDataStore {
     fun size(): Long
 
     /**
-     * Stores the given photo, if it is not already contained in the store.
-     * @return An error or `Unit`, if the photo has been stored or not.
+     * Add the given photo location, if it is not already contained in the store.
+     * @return An error or `Unit`, if the operation was successful or not.
      */
-    fun store(photo: Photo): Either<StorePhotoError, Unit>
+    fun add(photoLocation: PhotoLocation): Either<StorePhotoError, Unit>
 
     /**
      * Removes the given photo from the store. if it exists in the store.
      * @return An error or `Unit`, if the photo exists in the store or not.
      */
-    fun remove(photo: Photo): Either<RemovePhotoError, Unit>
+    fun remove(photoLocation: PhotoLocation): Either<RemovePhotoError, Unit>
 
     /**
-     * Updates the metadata assigned to the given photo, if the photo exists in the store.
+     * Stores or updates the metadata assigned to the given photo, if the photo exists in the store.
      * @return An error or `Unit`, if the photo exists in the store or not.
      */
-    fun updateMetadata(photo: Photo, metadata: Metadata): Either<StoreMetadataError, Unit>
+    fun storeMetadata(photoLocation: PhotoLocation, metadata: Metadata): Either<StoreMetadataError, Unit>
 
     /**
      * Removes all photos and metadata from this store.
