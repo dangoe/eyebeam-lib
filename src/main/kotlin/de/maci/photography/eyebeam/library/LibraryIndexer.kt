@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Daniel Götten
+ * Copyright 2024 Daniel Götten
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import de.maci.photography.eyebeam.library.indexing.FilesystemScanner
 import de.maci.photography.eyebeam.library.metadata.MetadataReader
 import de.maci.photography.eyebeam.library.model.PhotoLocation
 import de.maci.photography.eyebeam.library.storage.LibraryIndexDataStore
+import java.io.File
 import java.nio.file.Path
 
 internal class LibraryIndexer(private val metadataReader: MetadataReader) {
@@ -33,10 +34,13 @@ internal class LibraryIndexer(private val metadataReader: MetadataReader) {
         dataStore: LibraryIndexDataStore,
         configuration: IndexRebuildingConfiguration
     ) {
+        dataStore.photos().forEach {
+            if (it.path.toFile().exists()) {
+                dataStore.remove(it)
+            }
+        }
+
         val scanner = createScanner(configuration.fileFilter)
-
-        dataStore.clear()
-
         scanner.scan(configuration.folder) { path ->
             val photoLocation = PhotoLocation(path)
             dataStore.add(photoLocation)
